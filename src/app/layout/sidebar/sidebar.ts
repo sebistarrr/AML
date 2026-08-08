@@ -124,7 +124,11 @@ interface NavEntry {
       gap: var(--sp-1);
       background: var(--bg-sunken);
       border-right: 1px solid var(--border-subtle);
-      overflow: hidden;
+      /* Le rognage horizontal masque les libellés pendant le repli. Le
+         vertical, lui, rendait les entrées inatteignables sur écran court. */
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     /* --- Marque --- */

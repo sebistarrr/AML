@@ -161,6 +161,12 @@ const SHORTCUT_GROUPS: readonly { title: string; items: readonly Shortcut[] }[] 
     .shell {
       display: grid;
       grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+      /* Sans ligne explicite, la ligne implicite est dimensionnée sur le
+         contenu et déborde de la grille au lieu d'y être contrainte. Le
+         contenu ne défilerait alors jamais : il grandirait sous le bord de la
+         fenêtre, hors d'atteinte puisque body masque son débordement.
+         minmax(0, 1fr) fixe la ligne à la hauteur disponible. */
+      grid-template-rows: minmax(0, 1fr);
       height: 100%;
       transition: grid-template-columns var(--dur-base) var(--ease-out);
     }
@@ -169,8 +175,12 @@ const SHORTCUT_GROUPS: readonly { title: string; items: readonly Shortcut[] }[] 
       grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
     }
 
+    /* min-height: 0 sur toute la chaîne : un élément flex ou grille refuse par
+       défaut de descendre sous la taille de son contenu, ce qui suffirait à
+       rétablir le débordement que l'on vient de supprimer. */
     .shell__nav {
       min-width: 0;
+      min-height: 0;
       height: 100%;
     }
 
@@ -178,6 +188,7 @@ const SHORTCUT_GROUPS: readonly { title: string; items: readonly Shortcut[] }[] 
       display: flex;
       flex-direction: column;
       min-width: 0;
+      min-height: 0;
       height: 100%;
     }
 
@@ -233,9 +244,14 @@ const SHORTCUT_GROUPS: readonly { title: string; items: readonly Shortcut[] }[] 
        Elle reste atteignable par le bouton du header, ce qui évite de laisser
        l'application sans navigation sur téléphone. */
     @media (max-width: 720px) {
+      /* La navigation se superpose au contenu : en position fixe, elle quitte
+         le flux de la grille. Avec un gabarit à deux colonnes, .shell__main
+         deviendrait alors le premier élément en flux et se placerait dans la
+         première colonne — de largeur nulle. Une colonne unique lui donne
+         toute la largeur disponible. */
       .shell,
       .shell[data-collapsed] {
-        grid-template-columns: 0 minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
       }
 
       .shell__nav {
