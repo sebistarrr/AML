@@ -38,13 +38,13 @@ jobs:
       # (/alertes/a-traiter) n'existe pas sur disque. Servir l'application
       # depuis la page 404 laisse le routeur Angular reprendre la main.
       - name: SPA fallback
-        run: cp dist/aml-screening/browser/index.html dist/aml-screening/browser/404.html
+        run: cp dist/AML/browser/index.html dist/AML/browser/404.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/aml-screening/browser
+          path: dist/AML/browser
   deploy:
     environment:
       name: github-pages

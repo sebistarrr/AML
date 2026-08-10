@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "aml-screening": {
+    "AML": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -61,10 +61,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "aml-screening:build:production"
+              "buildTarget": "AML:build:production"
             },
             "development": {
-              "buildTarget": "aml-screening:build:development"
+              "buildTarget": "AML:build:development"
             }
           },
           "defaultConfiguration": "development"
