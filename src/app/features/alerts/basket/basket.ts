@@ -35,7 +35,7 @@ import { ModalComponent } from '../../../shared/ui/overlay/modal';
 /** Corbeille affichée, déduite de la route. */
 export type BasketScope = 'mine' | 'open' | 'processed';
 
-/** Colonne du tableau : clé de tri et libellé, dans l'ordre des maquettes. */
+/** Colonne du tableau : clé de tri et libellé, dans leur ordre d'affichage. */
 interface Column {
   readonly key: SortKey;
   readonly label: string;

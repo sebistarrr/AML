@@ -7,7 +7,7 @@ describe('jeu de données des alertes', () => {
   const open = ALERTS.filter((alert) => !isClosedStatus(alert.status));
   const processed = ALERTS.filter((alert) => isClosedStatus(alert.status));
 
-  it('reproduit les volumes affichés par les paginateurs des maquettes', () => {
+  it('reproduit les volumes affichés par les paginateurs', () => {
     expect(open.length).toBe(OPEN_ALERT_COUNT);
     expect(processed.length).toBe(PROCESSED_ALERT_COUNT);
   });
@@ -76,7 +76,7 @@ describe('jeu de données des alertes', () => {
     });
   });
 
-  it('décrit les personnes des maquettes de recherche et de profil', () => {
+  it('décrit les personnes des écrans de recherche et de profil', () => {
     const trans = PERSONS.filter((person) => person.identity?.surname === 'TRAN');
     expect(trans.map((person) => person.id)).toEqual(['PP123456789', 'PP123456790', 'PP123456791']);
 

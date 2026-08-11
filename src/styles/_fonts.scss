@@ -1,11 +1,10 @@
 /* =============================================================================
    POLICES — servies par l'application, jamais par un tiers
    -----------------------------------------------------------------------------
-   Les maquettes chargent Inter et Material Symbols depuis Google Fonts. Ici
-   les fichiers sont embarqués : l'application reste lisible hors ligne, aucune
-   requête vers un tiers n'est émise depuis le poste de l'analyste, et les
-   icônes ne s'affichent jamais sous forme de mots en clair le temps du
-   chargement.
+   Inter et Material Symbols sont embarquées plutôt que chargées depuis un
+   service tiers : l'application reste lisible hors ligne, aucune requête n'est
+   émise depuis le poste de l'analyste, et les icônes ne s'affichent jamais
+   sous forme de mots en clair le temps du chargement.
    ========================================================================== */
 
 @font-face {

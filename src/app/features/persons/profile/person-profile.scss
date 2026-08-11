@@ -1,16 +1,10 @@
 /* =============================================================================
    PROFIL DE RISQUE CLIENT
    -----------------------------------------------------------------------------
-   Feuille reprise telle quelle de PROFIL_RISQUE_PP.html / PROFIL_RISQUE_PM.html
-   (dossier `mockup-test`), à trois retouches près :
-     - les jetons, la remise à plat et le bandeau de navigation sont retirés :
-       ils sont déjà portés par la feuille globale et par le composant d'en-tête ;
-     - le sélecteur `main` devient `.profile`, le composant n'étant pas seul
-       dans le document ;
-     - le niveau de risque global est porté par une classe plutôt que par des
-       propriétés personnalisées posées en ligne par le script de la maquette.
-   Le reste — sélecteurs, valeurs, ordre de cascade, requêtes de média — est
-   identique à la maquette : c'est ce qui garantit le même rendu.
+   Feuille du design de référence, reprise telle quelle : sélecteurs, valeurs,
+   ordre de cascade et requêtes de média sont conservés à l'identique, et c'est
+   cette cascade qui produit le rendu attendu. Elle empile les itérations
+   successives du design, d'où sa taille.
    ========================================================================== */
 
 /* Écran routé : le routeur l'insère hors de la portée des styles de la
@@ -20,8 +14,8 @@
   animation: fade-in var(--dur-base) var(--ease-out);
 }
 
-/* Niveau de risque global — équivalent des `--global-level` / `--global-bg`
-   que la maquette posait en ligne depuis son script. */
+/* Niveau de risque global — porté par une classe plutôt que par des propriétés
+   personnalisées posées en ligne. */
 .global-risk.risk-green {
   --global-level: var(--green);
   --global-bg: var(--green-bg);
@@ -2223,10 +2217,9 @@ tbody tr:hover {
 .section-one-identity {
   background: var(--surface) !important;
 }
-/* --- Compléments à la maquette ---------------------------------------------
-   Trois besoins que le démonstrateur autonome n'avait pas :
-   l'absence de personne, le tri au clavier, et la décision d'inscription au
-   gel — que son jeu de données de démonstration ne produisait jamais. */
+/* --- Compléments ------------------------------------------------------------
+   Trois besoins que la référence ne couvrait pas : l'absence de personne, le
+   tri au clavier, et la décision d'inscription au gel. */
 
 .profile__missing {
   max-width: 640px;
@@ -2235,8 +2228,8 @@ tbody tr:hover {
   color: var(--muted);
 }
 
-/* Les en-têtes triables sont des boutons : la maquette posait l'écouteur sur
-   le `th` lui-même, inatteignable au clavier. Le rendu, lui, est identique. */
+/* Les en-têtes triables sont des boutons : un écouteur posé sur le `th`
+   lui-même serait inatteignable au clavier. Le rendu, lui, est identique. */
 .th-button {
   border: 0;
   padding: 0;
@@ -2263,9 +2256,9 @@ tbody tr:hover {
 /* =============================================================================
    PERSONNE MORALE
    -----------------------------------------------------------------------------
-   Reprises de PROFIL_RISQUE_PM.html, qui ajoute au fichier Personne physique la
-   grille signalétique de la société et le traitement « Blacklisté » — noir plein
-   plutôt que gris, pour ne pas le confondre avec « Données incomplètes ».
+   Ce que la personne morale ajoute à la personne physique : la grille
+   signalétique de la société, et le traitement « Blacklisté » en noir plein
+   plutôt qu'en gris, pour ne pas le confondre avec « Données incomplètes ».
    ========================================================================== */
 
 .company-identity-grid {

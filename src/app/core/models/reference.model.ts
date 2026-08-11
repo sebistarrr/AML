@@ -6,9 +6,8 @@
  * statut, d'une typologie d'alerte, d'une décision ou d'un niveau de risque.
  * Aucun composant ne redéfinit un libellé localement.
  *
- * Les valeurs reprennent à l'identique celles des maquettes de référence
- * (dossier `mockup-test`) : codes de statut en capitales, typologies
- * d'alerte limitées aux quatre dispositifs de screening du groupe.
+ * Les valeurs suivent le design de référence : codes de statut en capitales,
+ * typologies d'alerte limitées aux quatre dispositifs de screening du groupe.
  */
 
 /* -----------------------------------------------------------------------------
@@ -165,7 +164,7 @@ export type Decision =
   'CLEARED_L1' | 'ESCALATED_L2' | 'CLEARED_L2' | 'ENFORCED_SCRUTINY' | 'BLACKLISTED';
 
 export interface DecisionMeta {
-  /** Libellé du bouton radio, identique à la maquette de traitement. */
+  /** Libellé du bouton radio de l'écran de traitement. */
   readonly label: string;
   /** Libellé français, utilisé par le tableau d'alertes du profil de risque. */
   readonly labelFr: string;
@@ -274,7 +273,7 @@ export type RiskLevel =
 export interface RiskLevelMeta {
   /** Poids de sévérité : le risque global est le composant le plus élevé. */
   readonly severity: number;
-  /** Classe de couleur de la maquette de profil de risque. */
+  /** Classe de couleur utilisée par le profil de risque. */
   readonly variant: 'risk-green' | 'risk-grey' | 'risk-orange' | 'risk-red' | 'risk-black';
 }
 

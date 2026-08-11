@@ -16,7 +16,7 @@ import { focusFirst, trapFocus } from '../../util/focus-trap';
  * Coquille générique : elle gère le voile, le focus, la touche Échap et la
  * mise en page. Le contenu et les actions sont projetés par l'appelant. Le
  * gabarit — bandeau de titre gris, corps blanc, action de validation en bas à
- * droite — est celui des maquettes « Add a comment » et « Assign an alert ».
+ * droite — est celui des dialogues « Add a comment » et « Assign an alert ».
  */
 @Component({
   selector: 'app-modal',

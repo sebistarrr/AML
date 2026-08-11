@@ -3,15 +3,15 @@
  *
  * Il combine deux sources :
  *
- * 1. les alertes reprises **à l'identique** des maquettes de référence
- *    (`mockup-test`) — corbeilles « Alert Basket », « My alerts » et
- *    « Processed alerts », écran de traitement, profils de risque PP et PM ;
- * 2. un générateur déterministe qui complète les volumes affichés par les
- *    paginateurs des maquettes : 706 alertes ouvertes et 92 alertes traitées.
+ * 1. les alertes décrites à la main, qui alimentent les écrans de référence —
+ *    corbeilles « Alert Basket », « My alerts » et « Processed alerts »,
+ *    écran de traitement, profils de risque personne physique et morale ;
+ * 2. un générateur déterministe qui complète les volumes attendus :
+ *    706 alertes ouvertes et 92 alertes traitées.
  *
  * Le générateur est semé : à build identique, données identiques. Aucune
  * alerte générée n'est affectée à l'utilisateur par défaut, afin que la
- * corbeille « My alerts » reste celle des maquettes.
+ * corbeille « My alerts » reste stable.
  */
 
 import type {
@@ -27,7 +27,7 @@ import type {
 import { DEFAULT_USER_ID, ENTITIES, USERS, entityOf, type EntityId } from './reference.data';
 
 /* -----------------------------------------------------------------------------
-   Volumes cibles, lus sur les paginateurs des maquettes
+   Volumes cibles affichés par les paginateurs
    -------------------------------------------------------------------------- */
 
 export const OPEN_ALERT_COUNT = 706;
@@ -116,7 +116,7 @@ function toAlert(seed: AlertSeed): Alert {
 }
 
 /* -----------------------------------------------------------------------------
-   1. Corbeille « Alert Basket » — dix premières lignes de la maquette
+   1. Corbeille « Alert Basket » — les dix premières lignes
    -------------------------------------------------------------------------- */
 
 const BASKET_SEEDS: readonly AlertSeed[] = [
@@ -295,7 +295,7 @@ const MY_ALERTS_SEEDS: readonly AlertSeed[] = [
 ];
 
 /* -----------------------------------------------------------------------------
-   3. Écran de traitement — l'alerte 6134, reprise champ pour champ
+   3. Écran de traitement — l'alerte 6134, décrite champ pour champ
    -------------------------------------------------------------------------- */
 
 const FACTIVA_SAFAROV: Omit<ReconciliationRow, 'addressCountryCode'> = {
@@ -335,7 +335,7 @@ const PROCESSING_SEED: AlertSeed = {
 };
 
 /* -----------------------------------------------------------------------------
-   4. Corbeille « Processed alerts » — dix premières lignes de la maquette
+   4. Corbeille « Processed alerts » — les dix premières lignes
    -------------------------------------------------------------------------- */
 
 function processedSeed(
@@ -654,7 +654,7 @@ const COUNTRIES = [
 ] as const;
 
 /** Analystes pouvant recevoir une alerte générée — jamais le compte courant,
-    pour que la corbeille « My alerts » reste celle des maquettes. */
+    pour que la corbeille « My alerts » reste stable. */
 const ASSIGNABLE_USERS = USERS.filter((user) => user.id !== DEFAULT_USER_ID).map((user) => user.id);
 
 const OPEN_STATUSES: readonly AlertStatus[] = [

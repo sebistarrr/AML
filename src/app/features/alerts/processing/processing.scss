@@ -1,4 +1,4 @@
-/* Poste de traitement d'une alerte — gabarit repris des maquettes. */
+/* Poste de traitement d'une alerte. */
 
 /* Écran routé : le routeur l'insère hors de la portée des styles de la
    coquille, il porte donc lui-même sa mise en page et sa transition. */
@@ -7,9 +7,8 @@
   animation: fade-in var(--dur-base) var(--ease-out);
 }
 
-/* Les captures montrent des cartes pleine largeur, sans gouttière centrale :
-   le tableau de rapprochement compte treize colonnes et a besoin de tout
-   l'espace disponible. */
+/* Cartes pleine largeur, sans gouttière centrale : le tableau de
+   rapprochement compte treize colonnes et a besoin de tout l'espace. */
 .processing {
   padding: 0 12px 24px;
 }
@@ -117,7 +116,7 @@
 }
 
 /* La ligne du référentiel sert de repère : elle reste en encre normale, les
-   fiches rapprochées passent en rose comme dans les captures. */
+   fiches rapprochées passent en rose. */
 .reconciliation tr.is-source td {
   color: var(--text);
 }

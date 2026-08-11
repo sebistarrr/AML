@@ -7,8 +7,8 @@ import { ToastHostComponent } from '../../shared/ui/overlay/toast-host';
 /**
  * Coquille applicative : bandeau de référence, zone de contenu, surcouches.
  *
- * La navigation tient entièrement dans les onglets du bandeau, comme dans les
- * maquettes : il n'y a ni menu latéral ni second niveau de navigation.
+ * La navigation tient entièrement dans les onglets du bandeau : il n'y a ni
+ * menu latéral ni second niveau de navigation.
  */
 @Component({
   selector: 'app-shell',

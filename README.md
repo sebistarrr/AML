@@ -13,9 +13,8 @@ Le dispositif ne produit que **quatre typologies d'alerte** :
 | `RCA`      | Relatives and Close Associates | Proche ou associé d'une personne listée                    |
 | `HRTC`     | High Risk Third Country        | Rattachement à un pays tiers à haut risque                 |
 
-Les écrans, les libellés et les données affichées reprennent les maquettes de
-référence du dossier [`mockup-test/`](mockup-test) — corbeilles d'alertes,
-écran de traitement, recherche de personne et profils de risque.
+L'application couvre quatre écrans : les corbeilles d'alertes, l'écran de
+traitement, la recherche de personne et le profil de risque client.
 
 ## Démarrer
 
@@ -50,8 +49,7 @@ s'affiche normalement.
 - **Angular 21** — composants standalone, Signals, `computed()`, `effect()`
 - **Détection de changement sans Zone.js** (`provideZonelessChangeDetection`)
 - **Lazy loading** par fonctionnalité, liaison des paramètres de route aux `input()`
-- **SCSS** avec un système de jetons de conception repris des maquettes — un
-  seul thème, celui des maquettes
+- **SCSS** avec un système de jetons de conception — un seul thème
 - **Aucune dépendance d'affichage externe** — polices Inter et Material Symbols
   embarquées dans le bundle, aucune requête vers un tiers
 
@@ -143,16 +141,17 @@ valeur avant, valeur après et commentaire.
 
 ## Données de démonstration
 
-Le jeu de données combine les alertes et les personnes reprises **champ pour
-champ** des maquettes — les dix premières lignes de chaque corbeille, l'alerte
-6134 de l'écran de traitement, les profils `PP123456789` et `PM123456789`, les
-résultats de recherche — et un générateur déterministe qui complète les volumes
-affichés par les paginateurs des maquettes : **706 alertes ouvertes** et
-**92 alertes traitées**.
+Le jeu de données combine des alertes et des personnes décrites à la main —
+les premières lignes de chaque corbeille, l'alerte 6134 de l'écran de
+traitement, les profils `PP123456789` et `PM123456789`, les résultats de
+recherche — et un générateur déterministe qui complète les volumes :
+**706 alertes ouvertes** et **92 alertes traitées**.
 
 Le générateur est semé : à build identique, données identiques. Aucune alerte
 générée n'est affectée au compte par défaut, afin que la corbeille
-« My alerts » reste celle des maquettes.
+« My alerts » reste stable.
+
+Toutes les données sont **fictives**.
 
 ### Référentiel des filiales
 

@@ -1,7 +1,7 @@
 /**
  * Référentiel des personnes screenées.
  *
- * Les personnes des maquettes — CT313 (écran de traitement), PP123456789 et
+ * Les personnes de référence — CT313 (écran de traitement), PP123456789 et
  * PM123456789 (profils de risque), ainsi que les résultats de l'écran de
  * recherche — sont décrites champ pour champ. Les personnes portées par les
  * alertes générées sont dérivées de la ligne de référence de leur
@@ -66,7 +66,7 @@ const PROFILE_LINKS: readonly PersonLink[] = [
 ];
 
 /* -----------------------------------------------------------------------------
-   Personnes reprises des maquettes
+   Personnes décrites à la main
    -------------------------------------------------------------------------- */
 
 /** Personne de l'écran de traitement : le référentiel ne porte que le nom d'usage. */

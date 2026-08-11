@@ -24,7 +24,7 @@ import { ModalComponent } from '../../../shared/ui/overlay/modal';
 
 type Tab = 'person' | 'alert' | 'history';
 
-/** Colonnes du tableau de rapprochement, dans l'ordre de la maquette. */
+/** Colonnes du tableau de rapprochement, dans leur ordre d'affichage. */
 const RECONCILIATION_COLUMNS = [
   'Source',
   'Rate',

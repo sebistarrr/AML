@@ -11,7 +11,7 @@ interface Tab {
 /**
  * Bandeau de référence : logo du groupe, titre de l'application, compte,
  * langue, puis les quatre onglets de navigation. La structure et les
- * dimensions reprennent celles des maquettes.
+ * dimensions suivent le design de référence.
  */
 @Component({
   selector: 'app-header',
@@ -239,7 +239,7 @@ interface Tab {
       min-width: 53px;
     }
 
-    /* Drapeau britannique dessiné en CSS, comme dans les maquettes. */
+    /* Drapeau britannique dessiné en CSS, sans image à charger. */
     .flag-uk {
       position: relative;
       display: inline-block;

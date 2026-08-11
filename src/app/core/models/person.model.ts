@@ -1,7 +1,7 @@
 /**
  * Personnes screenées — physiques et morales.
  *
- * La structure reprend champ pour champ celle des maquettes : les libellés
+ * La structure suit champ pour champ le design de référence : les libellés
  * affichés sont portés par les écrans, mais l'ordre et le découpage des blocs
  * (identification, état civil, coordonnées postales, contrat, liens) sont
  * fixés ici pour rester cohérents d'un écran à l'autre.
