@@ -16,6 +16,22 @@ Le dispositif ne produit que **quatre typologies d'alerte** :
 L'application couvre quatre écrans : les corbeilles d'alertes, l'écran de
 traitement, la recherche de personne et le profil de risque client.
 
+## Spécification fonctionnelle
+
+Le comportement attendu de l'application est décrit en détail dans
+[`SPECIFICATION-FONCTIONNELLE.pdf`](SPECIFICATION-FONCTIONNELLE.pdf) :
+référentiel métier, cycle de vie de l'alerte, matrice des droits, contenu
+champ par champ de chaque écran, 24 règles de gestion et exigences
+transverses.
+
+Le document est généré à partir des règles portées par le code. Après toute
+évolution de ces règles, mettre à jour le générateur puis régénérer le PDF :
+
+```bash
+pip install reportlab
+python3 tools/generate-spec-pdf.py
+```
+
 ## Démarrer
 
 Prérequis : Node.js 20.19+, 22.12+ ou 24+.
