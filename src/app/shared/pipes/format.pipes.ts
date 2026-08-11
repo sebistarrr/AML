@@ -15,11 +15,17 @@ export class DashPipe implements PipeTransform {
   }
 }
 
-/** Taux de similarité formaté comme dans les corbeilles : « 99.5202 % ». */
+/**
+ * Taux de similarité.
+ *
+ * Les corbeilles l'espacent — « 99.5202 % » — là où le tableau de
+ * rapprochement le colle au chiffre : « 99.0698% ». Les deux formes viennent
+ * des maquettes, d'où le paramètre.
+ */
 @Pipe({ name: 'rate' })
 export class RatePipe implements PipeTransform {
-  transform(value: number | null | undefined): string {
+  transform(value: number | null | undefined, spaced = true): string {
     if (value === null || value === undefined || Number.isNaN(value)) return '-';
-    return `${Number(value.toFixed(4))} %`;
+    return `${Number(value.toFixed(4))}${spaced ? ' ' : ''}%`;
   }
 }

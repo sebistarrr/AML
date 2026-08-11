@@ -1,12 +1,10 @@
 /* =============================================================================
    Feuille de styles globale — AML PROJECT
-   L'ordre compte : polices → tokens → base → primitives → étiquettes →
-   animations.
+   L'ordre compte : polices → tokens → base → primitives → animations.
    ========================================================================== */
 
 @use './styles/fonts';
 @use './styles/tokens';
 @use './styles/base';
 @use './styles/primitives';
-@use './styles/badges';
 @use './styles/animations';

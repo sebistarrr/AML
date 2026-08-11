@@ -362,7 +362,7 @@
                 </div>
                 <div class="kv">
                   <dt>Max similarity rate</dt>
-                  <dd>{{ current.maxRate | rate }}</dd>
+                  <dd>{{ current.maxRate | rate: false }}</dd>
                 </div>
                 <div class="kv">
                   <dt>Status</dt>
@@ -433,19 +433,37 @@
                 </thead>
                 <tbody>
                   @for (row of reconciliationRows(); track $index) {
-                    <tr [class.is-source]="row.source === 'PERSON'">
+                    @let matched = row.source !== 'PERSON';
+
+                    <tr [class.is-source]="!matched">
                       <td class="reconciliation__source">{{ row.source }}</td>
-                      <td>{{ row.rate | rate }}</td>
-                      <td>{{ row.surname | dash }}</td>
-                      <td>{{ row.alternateName | dash }}</td>
-                      <td>{{ row.usualGivenName | dash }}</td>
-                      <td>{{ row.givenNames | dash }}</td>
-                      <td>{{ row.gender | dash }}</td>
-                      <td>{{ row.birthDate | dash }}</td>
-                      <td>{{ row.birthYear | dash }}</td>
-                      <td>{{ row.birthPlaceCode | dash }}</td>
-                      <td>{{ row.birthCountry | dash }}</td>
-                      <td>{{ row.addressCountryCode | dash }}</td>
+                      <td>{{ row.rate | rate: false }}</td>
+                      <td [class.is-matched]="matched && row.surname">{{ row.surname | dash }}</td>
+                      <td [class.is-matched]="matched && row.alternateName">
+                        {{ row.alternateName | dash }}
+                      </td>
+                      <td [class.is-matched]="matched && row.usualGivenName">
+                        {{ row.usualGivenName | dash }}
+                      </td>
+                      <td [class.is-matched]="matched && row.givenNames">
+                        {{ row.givenNames | dash }}
+                      </td>
+                      <td [class.is-matched]="matched && row.gender">{{ row.gender | dash }}</td>
+                      <td [class.is-matched]="matched && row.birthDate">
+                        {{ row.birthDate | dash }}
+                      </td>
+                      <td [class.is-matched]="matched && row.birthYear">
+                        {{ row.birthYear | dash }}
+                      </td>
+                      <td [class.is-matched]="matched && row.birthPlaceCode">
+                        {{ row.birthPlaceCode | dash }}
+                      </td>
+                      <td [class.is-matched]="matched && row.birthCountry">
+                        {{ row.birthCountry | dash }}
+                      </td>
+                      <td [class.is-matched]="matched && row.addressCountryCode">
+                        {{ row.addressCountryCode | dash }}
+                      </td>
                       <td>{{ row.citizenshipCountry | dash }}</td>
                     </tr>
                   } @empty {
@@ -473,7 +491,43 @@
                   <option [value]="25">25</option>
                 </select>
               </label>
+
               <span>{{ reconciliationRange() }}</span>
+
+              <span class="paginator__pages">
+                <button
+                  type="button"
+                  aria-label="Première page"
+                  [disabled]="reconciliationPage() === 0"
+                  (click)="reconciliationPage.set(0)"
+                >
+                  <span class="material-symbols-outlined">first_page</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Page précédente"
+                  [disabled]="reconciliationPage() === 0"
+                  (click)="reconciliationPage.set(reconciliationPage() - 1)"
+                >
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Page suivante"
+                  [disabled]="reconciliationPage() >= reconciliationPageCount() - 1"
+                  (click)="reconciliationPage.set(reconciliationPage() + 1)"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Dernière page"
+                  [disabled]="reconciliationPage() >= reconciliationPageCount() - 1"
+                  (click)="reconciliationPage.set(reconciliationPageCount() - 1)"
+                >
+                  <span class="material-symbols-outlined">last_page</span>
+                </button>
+              </span>
             </div>
           }
         </section>

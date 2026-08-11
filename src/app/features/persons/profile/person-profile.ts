@@ -1,3 +1,4 @@
+import { UpperCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -6,11 +7,14 @@ import {
   ALERT_TYPOLOGIES,
   ALERT_TYPOLOGY_META,
   DECISION_META,
+  PERSON_TYPE_META,
   RISK_LEVEL_META,
   USER_GROUP_META,
   sortableDate,
   type Alert,
+  type AlertStatus,
   type AlertTypology,
+  type Decision,
   type RiskComponent,
 } from '../../../core/models';
 import { AlertStore } from '../../../core/state/alert-store';
@@ -30,7 +34,7 @@ type SortKey =
 @Component({
   selector: 'app-person-profile',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DashPipe],
+  imports: [DashPipe, UpperCasePipe],
   templateUrl: './person-profile.html',
   styleUrl: './person-profile.scss',
 })
@@ -43,6 +47,7 @@ export class PersonProfileComponent {
 
   protected readonly typologies = ALERT_TYPOLOGIES;
   protected readonly typologyMeta = ALERT_TYPOLOGY_META;
+  protected readonly personTypeMeta = PERSON_TYPE_META;
   protected readonly riskMeta = RISK_LEVEL_META;
   protected readonly decisionMeta = DECISION_META;
   protected readonly groupMeta = USER_GROUP_META;
@@ -152,6 +157,56 @@ export class PersonProfileComponent {
       this.sortAsc.set(true);
     }
     this.page.set(0);
+  }
+
+  protected ariaSort(key: SortKey): 'ascending' | 'descending' | 'none' {
+    if (this.sortKey() !== key) return 'none';
+    return this.sortAsc() ? 'ascending' : 'descending';
+  }
+
+  /**
+   * Couleur du statut dans le tableau : orange tant que l'alerte est ouverte,
+   * rouge lorsqu'elle appelle une mesure, vert une fois écartée.
+   */
+  protected statusVariant(status: AlertStatus): 'open' | 'escalated' | 'closed' | 'blacklisted' {
+    switch (status) {
+      case 'TO_CLEAR_L1':
+      case 'IN_PROCESS_L1':
+      case 'IN_PROCESS_L2':
+        return 'open';
+      case 'ESCALATED_L2':
+      case 'ENFORCED_SCRUTINY':
+        return 'escalated';
+      /* Noir plein, jamais rouge : l'inscription au gel doit se distinguer au
+         premier coup d'œil d'une simple escalade. */
+      case 'BLACKLISTED':
+        return 'blacklisted';
+      default:
+        return 'closed';
+    }
+  }
+
+  protected decisionVariant(decision: Decision): string {
+    switch (decision) {
+      case 'ENFORCED_SCRUTINY':
+        return 'enhanced';
+      case 'CLEARED_L1':
+        return 'cleared';
+      case 'CLEARED_L2':
+        return 'validated';
+      case 'BLACKLISTED':
+        return 'blacklisted';
+      default:
+        return 'pending';
+    }
+  }
+
+  protected openDrawer(alert: Alert): void {
+    this.selected.set(alert);
+  }
+
+  protected closeDrawer(): void {
+    this.selected.set(null);
   }
 
   protected resetPage(): void {

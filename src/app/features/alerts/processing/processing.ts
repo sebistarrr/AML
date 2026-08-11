@@ -142,6 +142,10 @@ export class ProcessingComponent {
     return `${from} - ${to} of ${total}`;
   });
 
+  protected readonly reconciliationPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.matchedRows().length / this.reconciliationPageSize())),
+  );
+
   protected readonly personTabLabel = computed(() => {
     const alert = this.alert();
     return `Person details - ${alert ? PERSON_TYPE_META[alert.personType].label : ''}`;

@@ -1,31 +1,32 @@
 @let subject = person();
 
 @if (!subject) {
-  <section class="profile__missing">
-    <p>Cette personne n'existe pas dans le référentiel.</p>
-  </section>
+  <p class="profile__missing">Cette personne n'existe pas dans le référentiel.</p>
 } @else {
   <main class="profile">
     <!-- Synthèse des risques : global à gauche, composantes à droite. -->
-    <section class="risk-dashboard" aria-label="Synthèse des risques">
+    <section class="risk-wrap risk-dashboard" aria-label="Synthèse des risques">
       @let worst = globalRisk();
 
-      <div class="global-risk" [class]="worst ? riskMeta[worst.level].variant : 'risk-grey'">
-        <div class="global-risk__icon"><span class="material-symbols-outlined">shield</span></div>
-        <div class="global-risk__copy">
+      <div
+        class="global-risk"
+        [class]="worst ? riskMeta[worst.level].variant : 'risk-grey'"
+        aria-live="polite"
+      >
+        <div class="global-risk-icon"><span class="material-symbols-outlined">shield</span></div>
+        <div class="global-risk-copy">
           <span>Risque global</span>
           <strong>{{ worst?.level ?? 'Données incomplètes' }}</strong>
         </div>
-        @if (worst) {
-          <div class="global-risk__source">
-            <i class="dot"></i>
-            Niveau porté par {{ worst.code }}
-          </div>
-        }
+        <div class="global-risk-source">
+          @if (worst) {
+            <i class="dot" style="background: currentcolor"></i> Niveau porté par {{ worst.code }}
+          }
+        </div>
       </div>
 
       <div class="risk-components">
-        <p class="risk-components__label">Risques par composant</p>
+        <div class="risk-components-label"><span>Risques par composant</span></div>
         <div class="risk-labels">
           @for (risk of risks(); track risk.code) {
             <span
@@ -35,15 +36,8 @@
                 typologyMeta[risk.code].labelFr + ' · Dernier contrôle : ' + risk.lastCheckDate
               "
             >
-              <i class="dot"></i>
-              <strong>{{ risk.code }}</strong>
-              <span>{{ risk.level }}</span>
-            </span>
-          } @empty {
-            <span class="risk-status-chip risk-grey">
-              <i class="dot"></i>
-              <strong>Aucun</strong>
-              <span>Aucune composante évaluée</span>
+              <i class="dot"></i><strong>{{ risk.code }}</strong
+              ><span>{{ risk.level }}</span>
             </span>
           }
         </div>
@@ -51,255 +45,263 @@
     </section>
 
     <!-- Identité de la personne. -->
-    <section class="identity" aria-labelledby="person-title">
-      <div class="identity__summary">
-        <div class="identity__main">
-          <div class="identity__avatar">
-            <span class="material-symbols-outlined">
-              {{ subject.type === 'LEGAL' ? 'apartment' : 'person' }}
-            </span>
+    <section class="client-hero section-one" aria-labelledby="client-title">
+      <div class="hero-summary">
+        <div class="hero-main">
+          <div class="avatar">
+            <span class="material-symbols-outlined">{{ personTypeMeta[subject.type].icon }}</span>
           </div>
           <div>
-            <div class="identity__eyebrow">Identifiant Personne</div>
-            <div class="identity__id" id="person-title">{{ subject.id }}</div>
+            <div class="eyebrow">Identifiant Personne</div>
+            <div class="hero-id" id="client-title">{{ subject.id }}</div>
           </div>
         </div>
-
-        <div class="identity__field">
-          <span>Type de personne</span>
-          <strong>{{ subject.type === 'LEGAL' ? 'Personne morale' : 'Personne physique' }}</strong>
+        <div class="hero-field">
+          <span>Type de personne</span><strong>{{ personTypeMeta[subject.type].labelFr }}</strong>
         </div>
-        <div class="identity__field">
+        <div class="hero-field">
           <span>Dernière mise à jour</span><strong>{{ subject.updatedAt }}</strong>
         </div>
-        <div class="identity__field">
-          <span>Entité</span><strong class="is-entity">{{ subject.entity }}</strong>
+        <div class="hero-field">
+          <span>Entité</span><strong>{{ subject.entity | uppercase }}</strong>
         </div>
-        <div class="identity__field">
-          <span>Sous-entité</span><strong class="is-entity">{{ subject.subEntity }}</strong>
+        <div class="hero-field">
+          <span>Sous-entité</span><strong>{{ subject.subEntity | uppercase }}</strong>
         </div>
-        <div class="identity__field">
+        <div class="hero-field">
           <span>Identifiant partenaire</span><strong>{{ subject.partnerId }}</strong>
         </div>
-        <div class="identity__field">
+        <div class="hero-field">
           <span>Identifiant système</span><strong>{{ subject.systemId }}</strong>
         </div>
       </div>
 
-      <div class="identity__civil">
-        <div class="identity__grid">
+      <div class="section-one-identity">
+        <div class="identity-toolbar">
           @if (subject.type === 'LEGAL') {
-            <div>
-              <span>Company name</span><strong>{{ subject.company?.companyName | dash }}</strong>
-            </div>
-            <div>
-              <span>Legal status</span><strong>{{ subject.company?.legalStatus | dash }}</strong>
-            </div>
-            <div>
-              <span>Reference</span><strong>{{ subject.company?.reference | dash }}</strong>
-            </div>
-            <div>
-              <span>Country of incorporation</span>
-              <strong>{{ subject.company?.incorporationCountry | dash }}</strong>
-            </div>
-            <div>
-              <span>Activity domain</span
-              ><strong>{{ subject.company?.activityDomain | dash }}</strong>
-            </div>
-            <div>
-              <span>Date of creation</span
-              ><strong>{{ subject.company?.creationDate | dash }}</strong>
-            </div>
-            <div>
-              <span>Company identifier</span>
-              <strong>{{ subject.company?.companyIdentifier | dash }}</strong>
+            <div class="hero-identity-grid company-identity-grid">
+              <div>
+                <span>Company name</span><strong>{{ subject.company?.companyName | dash }}</strong>
+              </div>
+              <div>
+                <span>Legal status</span><strong>{{ subject.company?.legalStatus | dash }}</strong>
+              </div>
+              <div>
+                <span>Reference</span><strong>{{ subject.company?.reference | dash }}</strong>
+              </div>
+              <div>
+                <span>Country of incorporation</span>
+                <strong>{{ subject.company?.incorporationCountry | dash }}</strong>
+              </div>
+              <div>
+                <span>Activity domain</span>
+                <strong>{{ subject.company?.activityDomain | dash }}</strong>
+              </div>
+              <div>
+                <span>Date of creation</span>
+                <strong>{{ subject.company?.creationDate | dash }}</strong>
+              </div>
+              <div>
+                <span>Company identifier</span>
+                <strong>{{ subject.company?.companyIdentifier | dash }}</strong>
+              </div>
             </div>
           } @else {
-            <div>
-              <span>Surname</span><strong>{{ subject.identity?.surname | dash }}</strong>
-            </div>
-            <div>
-              <span>Alternate name</span
-              ><strong>{{ subject.identity?.alternateName | dash }}</strong>
-            </div>
-            <div>
-              <span>Usual given name</span>
-              <strong>{{ subject.identity?.usualGivenName | dash }}</strong>
-            </div>
-            <div>
-              <span>List of given names</span
-              ><strong>{{ subject.identity?.givenNames | dash }}</strong>
-            </div>
-            <div>
-              <span>Gender</span><strong>{{ subject.identity?.gender | dash }}</strong>
-            </div>
-            <div>
-              <span>Date of birth</span><strong>{{ subject.identity?.birthDate | dash }}</strong>
-            </div>
-            <div>
-              <span>Place code of birth</span>
-              <strong>{{ subject.identity?.birthPlaceCode | dash }}</strong>
-            </div>
-            <div>
-              <span>Country of birth</span
-              ><strong>{{ subject.identity?.birthCountry | dash }}</strong>
+            <div class="hero-identity-grid">
+              <div>
+                <span>Surname</span><strong>{{ subject.identity?.surname | dash }}</strong>
+              </div>
+              <div>
+                <span>Alternate name</span>
+                <strong>{{ subject.identity?.alternateName | dash }}</strong>
+              </div>
+              <div>
+                <span>Usual given name</span>
+                <strong>{{ subject.identity?.usualGivenName | dash }}</strong>
+              </div>
+              <div>
+                <span>List of given names</span>
+                <strong>{{ subject.identity?.givenNames | dash }}</strong>
+              </div>
+              <div>
+                <span>Gender</span><strong>{{ subject.identity?.gender | dash }}</strong>
+              </div>
+              <div>
+                <span>Date of birth</span><strong>{{ subject.identity?.birthDate | dash }}</strong>
+              </div>
+              <div>
+                <span>Place code of birth</span>
+                <strong>{{ subject.identity?.birthPlaceCode | dash }}</strong>
+              </div>
+              <div>
+                <span>Country of birth</span>
+                <strong>{{ subject.identity?.birthCountry | dash }}</strong>
+              </div>
             </div>
           }
         </div>
 
         <button
+          class="subtle-details-toggle details-banner"
           type="button"
-          class="identity__toggle"
           [attr.aria-expanded]="detailsOpen()"
+          aria-controls="personAdditionalData"
           (click)="detailsOpen.set(!detailsOpen())"
         >
           <span>Données complémentaires</span>
-          <span class="material-symbols-outlined">expand_more</span>
+          <span class="material-symbols-outlined details-chevron">expand_more</span>
         </button>
       </div>
 
-      @if (detailsOpen()) {
-        <div class="complementary">
-          <details class="complementary__card" [open]="isOpen('contact')">
-            <summary (click)="$event.preventDefault(); toggleSection('contact')">
-              <span class="complementary__title">
-                <span class="complementary__icon material-symbols-outlined">contact_phone</span>
-                <strong>Contact</strong>
-              </span>
-              <span class="material-symbols-outlined chevron">expand_more</span>
-            </summary>
-            <div class="complementary__body two-columns">
+      <div
+        class="hero-additional complementary-sections"
+        id="personAdditionalData"
+        [hidden]="!detailsOpen()"
+      >
+        <details class="complementary-card" [open]="isOpen('contact')">
+          <summary (click)="$event.preventDefault(); toggleSection('contact')">
+            <span class="summary-main">
+              <span class="complementary-icon material-symbols-outlined">contact_phone</span>
+              <strong>Contact</strong>
+            </span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="complementary-content contact-layout">
+            <div class="contact-item">
               <div>
                 <span>Email address</span><strong>{{ subject.email | dash }}</strong>
               </div>
+            </div>
+            <div class="contact-item">
               <div>
                 <span>Phone number</span><strong>{{ subject.phone | dash }}</strong>
               </div>
             </div>
-          </details>
+          </div>
+        </details>
 
-          <details class="complementary__card" [open]="isOpen('bank')">
-            <summary (click)="$event.preventDefault(); toggleSection('bank')">
-              <span class="complementary__title">
-                <span class="complementary__icon material-symbols-outlined">account_balance</span>
-                <strong>Coordonnées bancaires</strong>
-              </span>
-              <span class="material-symbols-outlined chevron">expand_more</span>
-            </summary>
-            <div class="complementary__body">
-              <div>
-                <span>IBAN</span><strong class="mono">{{ subject.iban | dash }}</strong>
-              </div>
+        <details class="complementary-card" [open]="isOpen('bank')">
+          <summary (click)="$event.preventDefault(); toggleSection('bank')">
+            <span class="summary-main">
+              <span class="complementary-icon material-symbols-outlined">account_balance</span>
+              <strong>Coordonnées bancaires</strong>
+            </span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="complementary-content bank-grid">
+            <div>
+              <span>IBAN</span><strong class="mono">{{ subject.iban | dash }}</strong>
             </div>
-          </details>
+          </div>
+        </details>
 
-          <details class="complementary__card" [open]="isOpen('postal')">
-            <summary (click)="$event.preventDefault(); toggleSection('postal')">
-              <span class="complementary__title">
-                <span class="complementary__icon material-symbols-outlined">location_on</span>
-                <strong>Coordonnées postales</strong>
-              </span>
-              <span class="material-symbols-outlined chevron">expand_more</span>
-            </summary>
-            <div class="complementary__body three-columns">
-              <div>
+        <details class="complementary-card postal-compact" [open]="isOpen('postal')">
+          <summary (click)="$event.preventDefault(); toggleSection('postal')">
+            <span class="summary-main">
+              <span class="complementary-icon material-symbols-outlined">location_on</span>
+              <strong>Coordonnées postales</strong>
+            </span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="complementary-content data-grid">
+            <div class="postal-column">
+              <div class="postal-item">
                 <span>Primary address line - recipient name</span>
                 <strong>{{ subject.address.recipientName | dash }}</strong>
               </div>
-              <div>
-                <span>Address line 4 - street number, extension and road type</span>
-                <strong>{{ subject.address.street | dash }}</strong>
-              </div>
-              <div>
-                <span>City</span><strong>{{ subject.address.city | dash }}</strong>
-              </div>
-
-              <div>
+              <div class="postal-item">
                 <span>Second address line - building complement</span>
                 <strong>{{ subject.address.buildingComplement | dash }}</strong>
               </div>
-              <div>
-                <span>Fifth line of the postal address - additional complement</span>
-                <strong>{{ subject.address.additionalComplement | dash }}</strong>
-              </div>
-              <div>
-                <span>Country code of the address</span>
-                <strong>{{ subject.address.countryCode | dash }}</strong>
-              </div>
-
-              <div>
+              <div class="postal-item">
                 <span>Third address line - external location complement</span>
                 <strong>{{ subject.address.locationComplement | dash }}</strong>
               </div>
-              <div>
+            </div>
+            <div class="postal-column">
+              <div class="postal-item">
+                <span>Address line 4 - street number, extension and road type</span>
+                <strong>{{ subject.address.street | dash }}</strong>
+              </div>
+              <div class="postal-item">
+                <span>Fifth line of the postal address - additional complement</span>
+                <strong>{{ subject.address.additionalComplement | dash }}</strong>
+              </div>
+              <div class="postal-item">
                 <span>Postal code</span><strong>{{ subject.address.postalCode | dash }}</strong>
               </div>
             </div>
-          </details>
+            <div class="postal-column">
+              <div class="postal-item">
+                <span>City</span><strong>{{ subject.address.city | dash }}</strong>
+              </div>
+              <div class="postal-item">
+                <span>Country code of the address</span>
+                <strong>{{ subject.address.countryCode | dash }}</strong>
+              </div>
+            </div>
+          </div>
+        </details>
 
-          <details class="complementary__card" [open]="isOpen('contract')">
-            <summary (click)="$event.preventDefault(); toggleSection('contract')">
-              <span class="complementary__title">
-                <span class="complementary__icon material-symbols-outlined">description</span>
-                <strong>Contract</strong>
+        <details class="complementary-card" [open]="isOpen('contract')">
+          <summary (click)="$event.preventDefault(); toggleSection('contract')">
+            <span class="summary-main">
+              <span class="complementary-icon material-symbols-outlined">description</span>
+              <strong>Contract</strong>
+            </span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="complementary-content data-grid">
+            <div>
+              <span>Contract number</span>
+              <strong class="mono">{{ subject.contract.number | dash }}</strong>
+            </div>
+            <div>
+              <span>Role</span><strong>{{ subject.contract.role | dash }}</strong>
+            </div>
+          </div>
+        </details>
+
+        @if (subject.links.length) {
+          <details class="complementary-card" [open]="isOpen('links')">
+            <summary (click)="$event.preventDefault(); toggleSection('links')">
+              <span class="summary-main">
+                <span class="complementary-icon material-symbols-outlined">group</span>
+                <strong>Person links</strong>
               </span>
               <span class="material-symbols-outlined chevron">expand_more</span>
             </summary>
-            <div class="complementary__body two-columns">
-              <div>
-                <span>Contract number</span>
-                <strong class="mono">{{ subject.contract.number | dash }}</strong>
+            <div class="complementary-content linked-table">
+              <div class="linked-row linked-header">
+                <span>Link type</span><span>Person ID</span><span>Person entity</span>
+                <span>Linked person ID</span><span>Linked person entity</span>
               </div>
-              <div>
-                <span>Role</span><strong>{{ subject.contract.role | dash }}</strong>
-              </div>
+              @for (link of subject.links; track link.linkType + link.linkedPersonId) {
+                <div class="linked-row">
+                  <span
+                    ><strong class="value-chip secondary-chip">{{ link.linkType }}</strong></span
+                  >
+                  <span class="mono">{{ link.personId }}</span>
+                  <span>{{ link.personEntity }}</span>
+                  <span class="mono">{{ link.linkedPersonId }}</span>
+                  <span>{{ link.linkedPersonEntity }}</span>
+                </div>
+              }
             </div>
           </details>
-
-          @if (subject.links.length) {
-            <details class="complementary__card" [open]="isOpen('links')">
-              <summary (click)="$event.preventDefault(); toggleSection('links')">
-                <span class="complementary__title">
-                  <span class="complementary__icon material-symbols-outlined">group</span>
-                  <strong>Person links</strong>
-                </span>
-                <span class="material-symbols-outlined chevron">expand_more</span>
-              </summary>
-              <div class="linked-table">
-                <div class="linked-row linked-header">
-                  <span>Link type</span>
-                  <span>Person ID</span>
-                  <span>Person entity</span>
-                  <span>Linked person ID</span>
-                  <span>Linked person entity</span>
-                </div>
-                @for (link of subject.links; track link.linkType + link.linkedPersonId) {
-                  <div class="linked-row">
-                    <span
-                      ><strong class="value-chip">{{ link.linkType }}</strong></span
-                    >
-                    <span class="mono">{{ link.personId }}</span>
-                    <span>{{ link.personEntity }}</span>
-                    <span class="mono">{{ link.linkedPersonId }}</span>
-                    <span>{{ link.linkedPersonEntity }}</span>
-                  </div>
-                }
-              </div>
-            </details>
-          }
-        </div>
-      }
+        }
+      </div>
     </section>
 
     <!-- Alertes de la personne. -->
-    <section class="alerts card" aria-labelledby="alerts-title">
-      <div class="card__head">
-        <span class="material-symbols-outlined">warning</span>
-        <h2 id="alerts-title">Alertes</h2>
+    <section class="section" id="alerts" aria-labelledby="alerts-title">
+      <div class="section-header">
+        <div class="section-icon"><span class="material-symbols-outlined">warning</span></div>
+        <div class="section-heading"><h2 id="alerts-title">Alertes</h2></div>
       </div>
 
-      <div class="alerts__toolbar">
-        <label class="alerts__search">
+      <div class="toolbar">
+        <label class="search">
           <span class="material-symbols-outlined">search</span>
           <span class="sr-only">Rechercher une alerte</span>
           <input
@@ -310,7 +312,7 @@
           />
         </label>
 
-        <label class="alerts__select">
+        <label class="select-wrap">
           <span class="material-symbols-outlined">flag</span>
           <span class="sr-only">Filtrer par statut</span>
           <select
@@ -324,7 +326,7 @@
           </select>
         </label>
 
-        <label class="alerts__select">
+        <label class="select-wrap">
           <span class="material-symbols-outlined">tune</span>
           <span class="sr-only">Filtrer par typologie</span>
           <select
@@ -338,67 +340,72 @@
           </select>
         </label>
 
-        <span class="alerts__counter" aria-live="polite">{{ counterLabel() }}</span>
+        <span class="counter" id="counter" aria-live="polite">{{ counterLabel() }}</span>
       </div>
 
       <div class="table-scroll">
-        <table class="data-table alerts__table">
+        <table aria-label="Alertes du client">
           <thead>
             <tr>
-              <th scope="col">
-                <button type="button" class="th-sort" (click)="sortBy('status')">Statut ↕</button>
+              <th [attr.aria-sort]="ariaSort('status')">
+                <button type="button" class="th-button" (click)="sortBy('status')">Statut ↕</button>
               </th>
-              <th scope="col">
-                <button type="button" class="th-sort" (click)="sortBy('reference')">
+              <th [attr.aria-sort]="ariaSort('reference')">
+                <button type="button" class="th-button" (click)="sortBy('reference')">
                   ID alerte ↕
                 </button>
               </th>
-              <th scope="col">
-                <button type="button" class="th-sort" (click)="sortBy('alertDate')">
+              <th [attr.aria-sort]="ariaSort('alertDate')">
+                <button type="button" class="th-button" (click)="sortBy('alertDate')">
                   Date de l'alerte ↕
                 </button>
               </th>
-              <th scope="col">
-                <button type="button" class="th-sort" (click)="sortBy('typology')">
+              <th [attr.aria-sort]="ariaSort('typology')">
+                <button type="button" class="th-button" (click)="sortBy('typology')">
                   Typologie ↕
                 </button>
               </th>
-              <th scope="col">
-                <button type="button" class="th-sort" (click)="sortBy('circuit')">Circuit ↕</button>
+              <th [attr.aria-sort]="ariaSort('circuit')">
+                <button type="button" class="th-button" (click)="sortBy('circuit')">
+                  Circuit ↕
+                </button>
               </th>
-              <th scope="col">Détail alerte</th>
-              <th scope="col">
-                <button type="button" class="th-sort" (click)="sortBy('decision')">
+              <th>Détail alerte</th>
+              <th [attr.aria-sort]="ariaSort('decision')">
+                <button type="button" class="th-button" (click)="sortBy('decision')">
                   Décision ↕
                 </button>
               </th>
-              <th scope="col">
-                <button type="button" class="th-sort" (click)="sortBy('processedAt')">
+              <th [attr.aria-sort]="ariaSort('processedAt')">
+                <button type="button" class="th-button" (click)="sortBy('processedAt')">
                   Date de traitement ↕
                 </button>
               </th>
-              <th scope="col">Groupe</th>
-              <th scope="col">Utilisateur</th>
-              <th scope="col"><span class="sr-only">Actions</span></th>
+              <th>Groupe</th>
+              <th>Utilisateur</th>
+              <th><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
 
           <tbody>
             @for (alert of rows(); track alert.id) {
               <tr>
-                <td>{{ alert.status }}</td>
-                <td>{{ alert.reference }}</td>
-                <td class="is-date">{{ alert.alertDate }}</td>
+                <td>
+                  <span class="status" [class]="statusVariant(alert.status)">
+                    <i class="dot" style="background: currentcolor"></i>{{ alert.status }}
+                  </span>
+                </td>
+                <td>
+                  <span>{{ alert.reference }}</span>
+                </td>
+                <td>{{ alert.alertDate }}</td>
                 <td>{{ alert.typology }}</td>
                 <td>{{ alert.circuit }}</td>
                 <td>{{ alert.detail }}</td>
                 <td>
                   @if (alert.decision) {
-                    <span
-                      class="decision-tag"
-                      [class]="'tone-' + decisionMeta[alert.decision].tone"
-                    >
-                      <i class="dot"></i>
+                    <span class="decision-tag" [class]="decisionVariant(alert.decision)">
+                      <i class="dot" style="background: currentcolor"></i>
                       {{ decisionMeta[alert.decision].labelFr }}
                     </span>
                   }
@@ -408,10 +415,10 @@
                 <td>{{ alert.user | dash }}</td>
                 <td>
                   <button
-                    type="button"
                     class="row-action"
-                    (click)="openAlert(alert)"
+                    type="button"
                     [attr.aria-label]="'Consulter l’alerte ' + alert.reference"
+                    (click)="openDrawer(alert)"
                   >
                     <span class="material-symbols-outlined">visibility</span>
                   </button>
@@ -419,7 +426,9 @@
               </tr>
             } @empty {
               <tr>
-                <td class="is-empty" colspan="11">Aucune alerte ne correspond aux filtres.</td>
+                <td colspan="11" style="height: 90px; text-align: center; color: var(--muted)">
+                  Aucune alerte ne correspond aux filtres.
+                </td>
               </tr>
             }
           </tbody>
@@ -438,28 +447,126 @@
             <option [value]="20">20</option>
           </select>
         </label>
-
         <span>{{ pageLabel() }}</span>
-
-        <span class="paginator__pages">
-          <button
-            type="button"
-            (click)="goTo(page() - 1)"
-            [disabled]="page() === 0"
-            aria-label="Page précédente"
-          >
-            <span class="material-symbols-outlined">chevron_left</span>
-          </button>
-          <button
-            type="button"
-            (click)="goTo(page() + 1)"
-            [disabled]="page() >= pageCount() - 1"
-            aria-label="Page suivante"
-          >
-            <span class="material-symbols-outlined">chevron_right</span>
-          </button>
-        </span>
+        <button
+          class="page-btn"
+          type="button"
+          aria-label="Page précédente"
+          [disabled]="page() === 0"
+          (click)="goTo(page() - 1)"
+        >
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <button
+          class="page-btn"
+          type="button"
+          aria-label="Page suivante"
+          [disabled]="page() >= pageCount() - 1"
+          (click)="goTo(page() + 1)"
+        >
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
       </div>
     </section>
   </main>
+
+  <!-- Aperçu d'une alerte, sans quitter le profil. -->
+  @let current = selected();
+
+  <div
+    class="scrim"
+    [class.open]="current !== null"
+    (click)="closeDrawer()"
+    aria-hidden="true"
+  ></div>
+
+  <aside
+    class="drawer"
+    [class.open]="current !== null"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="drawerTitle"
+    tabindex="-1"
+    (keydown.escape)="closeDrawer()"
+  >
+    @if (current) {
+      <div class="drawer-header">
+        <div class="section-icon"><span class="material-symbols-outlined">policy</span></div>
+        <div class="drawer-title">
+          <h2 id="drawerTitle">Détail de l'alerte</h2>
+          <p>{{ current.reference }} · {{ current.typology }}</p>
+        </div>
+        <button
+          class="icon-btn"
+          type="button"
+          aria-label="Fermer le panneau"
+          (click)="closeDrawer()"
+        >
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="drawer-block">
+          <h3>Identification de l'alerte</h3>
+          <div class="detail-list">
+            <div>
+              <span>Date de l'alerte</span><strong>{{ current.alertDate }}</strong>
+            </div>
+            <div>
+              <span>Circuit</span><strong>{{ current.circuit }}</strong>
+            </div>
+            <div>
+              <span>Typologie</span><strong>{{ current.typology }}</strong>
+            </div>
+            <div>
+              <span>Statut</span><strong>{{ current.status }}</strong>
+            </div>
+            <div>
+              <span>Décision</span>
+              <strong>{{ current.decision ? decisionMeta[current.decision].labelFr : '' }}</strong>
+            </div>
+            <div>
+              <span>Date de traitement</span><strong>{{ current.processedAt }}</strong>
+            </div>
+            <div>
+              <span>Client</span><strong>{{ subject.id }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-block">
+          <h3>Rapprochement</h3>
+          <div class="detail-list">
+            <div style="grid-column: 1 / -1">
+              <span>Détail alerte</span><strong>{{ current.detail }}</strong>
+            </div>
+            <div><span>Source</span><strong>FACTIVA / Référentiel interne</strong></div>
+            <div>
+              <span>Entité</span><strong>{{ current.entity | uppercase }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-block">
+          <h3>Affectation</h3>
+          <div class="detail-list">
+            <div>
+              <span>Groupe</span><strong>{{ current.userGroup | dash }}</strong>
+            </div>
+            <div>
+              <span>Utilisateur</span><strong>{{ current.user | dash }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="ghost-btn" type="button" (click)="closeDrawer()">Fermer</button>
+        <button class="primary-btn" type="button" (click)="openAlert(current)">
+          <span class="material-symbols-outlined">open_in_new</span>Consulter l'alerte
+        </button>
+      </div>
+    }
+  </aside>
 }
