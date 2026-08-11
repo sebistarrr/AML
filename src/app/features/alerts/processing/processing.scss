@@ -1,0 +1,235 @@
+/* Poste de traitement d'une alerte — gabarit repris des maquettes. */
+
+.processing {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 12px 24px;
+}
+
+.processing__missing {
+  max-width: 640px;
+  margin: 60px auto;
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  color: var(--muted);
+}
+
+.processing__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.processing__actions-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.processing__back {
+  font-weight: 600;
+}
+
+/* --- Onglets ---------------------------------------------------------------- */
+
+.tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 1px solid var(--line);
+  border-radius: 8px 8px 0 0;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.tabs__tab {
+  min-height: 52px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabs__tab:last-child {
+  border-right: 0;
+}
+
+.tabs__tab.active {
+  background: var(--surface-2);
+  border-bottom-color: var(--pink);
+  color: var(--pink);
+}
+
+/* --- Empilement des cartes --------------------------------------------------- */
+
+.stack {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.card__footer-action {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.kv__hint {
+  font-size: 15px;
+  color: var(--pink);
+  vertical-align: middle;
+}
+
+.kv--highlight > dt,
+.kv--highlight > dd {
+  color: var(--pink);
+}
+
+.kv > dd .dot {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* --- Rapprochement ----------------------------------------------------------- */
+
+.reconciliation {
+  min-width: 1500px;
+}
+
+.reconciliation__source {
+  color: var(--pink);
+  font-weight: 600;
+}
+
+.reconciliation tr:not(.is-source) td:not(.reconciliation__source) {
+  color: var(--pink);
+}
+
+.reconciliation tr.is-source td {
+  color: var(--text);
+}
+
+/* --- Décisions ---------------------------------------------------------------- */
+
+.decisions__label {
+  margin-bottom: 10px;
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.decisions__options {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+
+.decisions__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  color: var(--navy);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.decisions__option input {
+  accent-color: var(--navy);
+  width: 16px;
+  height: 16px;
+}
+
+.decisions__justification {
+  display: block;
+}
+
+.decisions__justification > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.decisions__justification textarea {
+  width: 100%;
+  min-height: 130px;
+  padding: 10px 12px;
+  border: 1px solid var(--navy);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  resize: vertical;
+}
+
+.decisions__actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.decisions__recorded,
+.decisions__locked {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* --- Historique et commentaires ------------------------------------------------ */
+
+.history__comment {
+  max-width: 320px;
+  text-align: left;
+  white-space: normal;
+}
+
+.comment {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.comment:last-child {
+  border-bottom: 0;
+}
+
+.comment__meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.comment__body {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.comment__empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.assign {
+  display: grid;
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .tabs {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+  }
+
+  .tabs__tab {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}

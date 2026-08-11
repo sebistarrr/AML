@@ -1,0 +1,465 @@
+@let subject = person();
+
+@if (!subject) {
+  <section class="profile__missing">
+    <p>Cette personne n'existe pas dans le référentiel.</p>
+  </section>
+} @else {
+  <main class="profile">
+    <!-- Synthèse des risques : global à gauche, composantes à droite. -->
+    <section class="risk-dashboard" aria-label="Synthèse des risques">
+      @let worst = globalRisk();
+
+      <div class="global-risk" [class]="worst ? riskMeta[worst.level].variant : 'risk-grey'">
+        <div class="global-risk__icon"><span class="material-symbols-outlined">shield</span></div>
+        <div class="global-risk__copy">
+          <span>Risque global</span>
+          <strong>{{ worst?.level ?? 'Données incomplètes' }}</strong>
+        </div>
+        @if (worst) {
+          <div class="global-risk__source">
+            <i class="dot"></i>
+            Niveau porté par {{ worst.code }}
+          </div>
+        }
+      </div>
+
+      <div class="risk-components">
+        <p class="risk-components__label">Risques par composant</p>
+        <div class="risk-labels">
+          @for (risk of risks(); track risk.code) {
+            <span
+              class="risk-status-chip"
+              [class]="riskMeta[risk.level].variant"
+              [title]="
+                typologyMeta[risk.code].labelFr + ' · Dernier contrôle : ' + risk.lastCheckDate
+              "
+            >
+              <i class="dot"></i>
+              <strong>{{ risk.code }}</strong>
+              <span>{{ risk.level }}</span>
+            </span>
+          } @empty {
+            <span class="risk-status-chip risk-grey">
+              <i class="dot"></i>
+              <strong>Aucun</strong>
+              <span>Aucune composante évaluée</span>
+            </span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Identité de la personne. -->
+    <section class="identity" aria-labelledby="person-title">
+      <div class="identity__summary">
+        <div class="identity__main">
+          <div class="identity__avatar">
+            <span class="material-symbols-outlined">
+              {{ subject.type === 'LEGAL' ? 'apartment' : 'person' }}
+            </span>
+          </div>
+          <div>
+            <div class="identity__eyebrow">Identifiant Personne</div>
+            <div class="identity__id" id="person-title">{{ subject.id }}</div>
+          </div>
+        </div>
+
+        <div class="identity__field">
+          <span>Type de personne</span>
+          <strong>{{ subject.type === 'LEGAL' ? 'Personne morale' : 'Personne physique' }}</strong>
+        </div>
+        <div class="identity__field">
+          <span>Dernière mise à jour</span><strong>{{ subject.updatedAt }}</strong>
+        </div>
+        <div class="identity__field">
+          <span>Entité</span><strong class="is-entity">{{ subject.entity }}</strong>
+        </div>
+        <div class="identity__field">
+          <span>Sous-entité</span><strong class="is-entity">{{ subject.subEntity }}</strong>
+        </div>
+        <div class="identity__field">
+          <span>Identifiant partenaire</span><strong>{{ subject.partnerId }}</strong>
+        </div>
+        <div class="identity__field">
+          <span>Identifiant système</span><strong>{{ subject.systemId }}</strong>
+        </div>
+      </div>
+
+      <div class="identity__civil">
+        <div class="identity__grid">
+          @if (subject.type === 'LEGAL') {
+            <div>
+              <span>Company name</span><strong>{{ subject.company?.companyName | dash }}</strong>
+            </div>
+            <div>
+              <span>Legal status</span><strong>{{ subject.company?.legalStatus | dash }}</strong>
+            </div>
+            <div>
+              <span>Reference</span><strong>{{ subject.company?.reference | dash }}</strong>
+            </div>
+            <div>
+              <span>Country of incorporation</span>
+              <strong>{{ subject.company?.incorporationCountry | dash }}</strong>
+            </div>
+            <div>
+              <span>Activity domain</span
+              ><strong>{{ subject.company?.activityDomain | dash }}</strong>
+            </div>
+            <div>
+              <span>Date of creation</span
+              ><strong>{{ subject.company?.creationDate | dash }}</strong>
+            </div>
+            <div>
+              <span>Company identifier</span>
+              <strong>{{ subject.company?.companyIdentifier | dash }}</strong>
+            </div>
+          } @else {
+            <div>
+              <span>Surname</span><strong>{{ subject.identity?.surname | dash }}</strong>
+            </div>
+            <div>
+              <span>Alternate name</span
+              ><strong>{{ subject.identity?.alternateName | dash }}</strong>
+            </div>
+            <div>
+              <span>Usual given name</span>
+              <strong>{{ subject.identity?.usualGivenName | dash }}</strong>
+            </div>
+            <div>
+              <span>List of given names</span
+              ><strong>{{ subject.identity?.givenNames | dash }}</strong>
+            </div>
+            <div>
+              <span>Gender</span><strong>{{ subject.identity?.gender | dash }}</strong>
+            </div>
+            <div>
+              <span>Date of birth</span><strong>{{ subject.identity?.birthDate | dash }}</strong>
+            </div>
+            <div>
+              <span>Place code of birth</span>
+              <strong>{{ subject.identity?.birthPlaceCode | dash }}</strong>
+            </div>
+            <div>
+              <span>Country of birth</span
+              ><strong>{{ subject.identity?.birthCountry | dash }}</strong>
+            </div>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="identity__toggle"
+          [attr.aria-expanded]="detailsOpen()"
+          (click)="detailsOpen.set(!detailsOpen())"
+        >
+          <span>Données complémentaires</span>
+          <span class="material-symbols-outlined">expand_more</span>
+        </button>
+      </div>
+
+      @if (detailsOpen()) {
+        <div class="complementary">
+          <details class="complementary__card" [open]="isOpen('contact')">
+            <summary (click)="$event.preventDefault(); toggleSection('contact')">
+              <span class="complementary__title">
+                <span class="complementary__icon material-symbols-outlined">contact_phone</span>
+                <strong>Contact</strong>
+              </span>
+              <span class="material-symbols-outlined chevron">expand_more</span>
+            </summary>
+            <div class="complementary__body two-columns">
+              <div>
+                <span>Email address</span><strong>{{ subject.email | dash }}</strong>
+              </div>
+              <div>
+                <span>Phone number</span><strong>{{ subject.phone | dash }}</strong>
+              </div>
+            </div>
+          </details>
+
+          <details class="complementary__card" [open]="isOpen('bank')">
+            <summary (click)="$event.preventDefault(); toggleSection('bank')">
+              <span class="complementary__title">
+                <span class="complementary__icon material-symbols-outlined">account_balance</span>
+                <strong>Coordonnées bancaires</strong>
+              </span>
+              <span class="material-symbols-outlined chevron">expand_more</span>
+            </summary>
+            <div class="complementary__body">
+              <div>
+                <span>IBAN</span><strong class="mono">{{ subject.iban | dash }}</strong>
+              </div>
+            </div>
+          </details>
+
+          <details class="complementary__card" [open]="isOpen('postal')">
+            <summary (click)="$event.preventDefault(); toggleSection('postal')">
+              <span class="complementary__title">
+                <span class="complementary__icon material-symbols-outlined">location_on</span>
+                <strong>Coordonnées postales</strong>
+              </span>
+              <span class="material-symbols-outlined chevron">expand_more</span>
+            </summary>
+            <div class="complementary__body three-columns">
+              <div>
+                <span>Primary address line - recipient name</span>
+                <strong>{{ subject.address.recipientName | dash }}</strong>
+              </div>
+              <div>
+                <span>Address line 4 - street number, extension and road type</span>
+                <strong>{{ subject.address.street | dash }}</strong>
+              </div>
+              <div>
+                <span>City</span><strong>{{ subject.address.city | dash }}</strong>
+              </div>
+
+              <div>
+                <span>Second address line - building complement</span>
+                <strong>{{ subject.address.buildingComplement | dash }}</strong>
+              </div>
+              <div>
+                <span>Fifth line of the postal address - additional complement</span>
+                <strong>{{ subject.address.additionalComplement | dash }}</strong>
+              </div>
+              <div>
+                <span>Country code of the address</span>
+                <strong>{{ subject.address.countryCode | dash }}</strong>
+              </div>
+
+              <div>
+                <span>Third address line - external location complement</span>
+                <strong>{{ subject.address.locationComplement | dash }}</strong>
+              </div>
+              <div>
+                <span>Postal code</span><strong>{{ subject.address.postalCode | dash }}</strong>
+              </div>
+            </div>
+          </details>
+
+          <details class="complementary__card" [open]="isOpen('contract')">
+            <summary (click)="$event.preventDefault(); toggleSection('contract')">
+              <span class="complementary__title">
+                <span class="complementary__icon material-symbols-outlined">description</span>
+                <strong>Contract</strong>
+              </span>
+              <span class="material-symbols-outlined chevron">expand_more</span>
+            </summary>
+            <div class="complementary__body two-columns">
+              <div>
+                <span>Contract number</span>
+                <strong class="mono">{{ subject.contract.number | dash }}</strong>
+              </div>
+              <div>
+                <span>Role</span><strong>{{ subject.contract.role | dash }}</strong>
+              </div>
+            </div>
+          </details>
+
+          @if (subject.links.length) {
+            <details class="complementary__card" [open]="isOpen('links')">
+              <summary (click)="$event.preventDefault(); toggleSection('links')">
+                <span class="complementary__title">
+                  <span class="complementary__icon material-symbols-outlined">group</span>
+                  <strong>Person links</strong>
+                </span>
+                <span class="material-symbols-outlined chevron">expand_more</span>
+              </summary>
+              <div class="linked-table">
+                <div class="linked-row linked-header">
+                  <span>Link type</span>
+                  <span>Person ID</span>
+                  <span>Person entity</span>
+                  <span>Linked person ID</span>
+                  <span>Linked person entity</span>
+                </div>
+                @for (link of subject.links; track link.linkType + link.linkedPersonId) {
+                  <div class="linked-row">
+                    <span
+                      ><strong class="value-chip">{{ link.linkType }}</strong></span
+                    >
+                    <span class="mono">{{ link.personId }}</span>
+                    <span>{{ link.personEntity }}</span>
+                    <span class="mono">{{ link.linkedPersonId }}</span>
+                    <span>{{ link.linkedPersonEntity }}</span>
+                  </div>
+                }
+              </div>
+            </details>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Alertes de la personne. -->
+    <section class="alerts card" aria-labelledby="alerts-title">
+      <div class="card__head">
+        <span class="material-symbols-outlined">warning</span>
+        <h2 id="alerts-title">Alertes</h2>
+      </div>
+
+      <div class="alerts__toolbar">
+        <label class="alerts__search">
+          <span class="material-symbols-outlined">search</span>
+          <span class="sr-only">Rechercher une alerte</span>
+          <input
+            type="search"
+            placeholder="Rechercher par ID, détail ou utilisateur…"
+            [value]="query()"
+            (input)="query.set($any($event.target).value); resetPage()"
+          />
+        </label>
+
+        <label class="alerts__select">
+          <span class="material-symbols-outlined">flag</span>
+          <span class="sr-only">Filtrer par statut</span>
+          <select
+            [value]="statusFilter()"
+            (change)="statusFilter.set($any($event.target).value); resetPage()"
+          >
+            <option value="">Tous les statuts</option>
+            @for (status of statuses(); track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="alerts__select">
+          <span class="material-symbols-outlined">tune</span>
+          <span class="sr-only">Filtrer par typologie</span>
+          <select
+            [value]="typologyFilter()"
+            (change)="typologyFilter.set($any($event.target).value); resetPage()"
+          >
+            <option value="">Toutes les typologies</option>
+            @for (typology of typologies; track typology) {
+              <option [value]="typology">{{ typology }}</option>
+            }
+          </select>
+        </label>
+
+        <span class="alerts__counter" aria-live="polite">{{ counterLabel() }}</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table alerts__table">
+          <thead>
+            <tr>
+              <th scope="col">
+                <button type="button" class="th-sort" (click)="sortBy('status')">Statut ↕</button>
+              </th>
+              <th scope="col">
+                <button type="button" class="th-sort" (click)="sortBy('reference')">
+                  ID alerte ↕
+                </button>
+              </th>
+              <th scope="col">
+                <button type="button" class="th-sort" (click)="sortBy('alertDate')">
+                  Date de l'alerte ↕
+                </button>
+              </th>
+              <th scope="col">
+                <button type="button" class="th-sort" (click)="sortBy('typology')">
+                  Typologie ↕
+                </button>
+              </th>
+              <th scope="col">
+                <button type="button" class="th-sort" (click)="sortBy('circuit')">Circuit ↕</button>
+              </th>
+              <th scope="col">Détail alerte</th>
+              <th scope="col">
+                <button type="button" class="th-sort" (click)="sortBy('decision')">
+                  Décision ↕
+                </button>
+              </th>
+              <th scope="col">
+                <button type="button" class="th-sort" (click)="sortBy('processedAt')">
+                  Date de traitement ↕
+                </button>
+              </th>
+              <th scope="col">Groupe</th>
+              <th scope="col">Utilisateur</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (alert of rows(); track alert.id) {
+              <tr>
+                <td>{{ alert.status }}</td>
+                <td>{{ alert.reference }}</td>
+                <td class="is-date">{{ alert.alertDate }}</td>
+                <td>{{ alert.typology }}</td>
+                <td>{{ alert.circuit }}</td>
+                <td>{{ alert.detail }}</td>
+                <td>
+                  @if (alert.decision) {
+                    <span
+                      class="decision-tag"
+                      [class]="'tone-' + decisionMeta[alert.decision].tone"
+                    >
+                      <i class="dot"></i>
+                      {{ decisionMeta[alert.decision].labelFr }}
+                    </span>
+                  }
+                </td>
+                <td>{{ alert.processedAt }}</td>
+                <td>{{ alert.userGroup }}</td>
+                <td>{{ alert.user | dash }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="row-action"
+                    (click)="openAlert(alert)"
+                    [attr.aria-label]="'Consulter l’alerte ' + alert.reference"
+                  >
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="is-empty" colspan="11">Aucune alerte ne correspond aux filtres.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="paginator">
+        <label>
+          Éléments par page
+          <select
+            [value]="pageSize()"
+            (change)="pageSize.set(+$any($event.target).value); resetPage()"
+          >
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+          </select>
+        </label>
+
+        <span>{{ pageLabel() }}</span>
+
+        <span class="paginator__pages">
+          <button
+            type="button"
+            (click)="goTo(page() - 1)"
+            [disabled]="page() === 0"
+            aria-label="Page précédente"
+          >
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button
+            type="button"
+            (click)="goTo(page() + 1)"
+            [disabled]="page() >= pageCount() - 1"
+            aria-label="Page suivante"
+          >
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </span>
+      </div>
+    </section>
+  </main>
+}

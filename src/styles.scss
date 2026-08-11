@@ -1,8 +1,10 @@
 /* =============================================================================
-   Feuille de styles globale — Plateforme LCB-FT
-   L'ordre compte : tokens → base → primitives → badges → animations.
+   Feuille de styles globale — European Tower of Control
+   L'ordre compte : polices → tokens → base → primitives → étiquettes →
+   animations.
    ========================================================================== */
 
+@use './styles/fonts';
 @use './styles/tokens';
 @use './styles/base';
 @use './styles/primitives';

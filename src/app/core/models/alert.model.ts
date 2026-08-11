@@ -1,180 +1,129 @@
 /**
- * L'alerte : l'objet central de la plateforme. Elle relie un client de la
- * filiale à une fiche de personne listée, porte le détail du rapprochement
- * calculé par le moteur, et suit son propre cycle de vie dans le workflow.
+ * L'alerte : l'objet central de la plateforme.
+ *
+ * Elle relie une personne du référentiel à une fiche listée par le
+ * fournisseur de données (Factiva), porte le détail du rapprochement calculé
+ * par le moteur de similarité, et suit son propre cycle de vie dans le
+ * workflow niveau 1 / niveau 2.
  */
 
-import type { AlertStatus, ComparisonResult, Decision, Priority, ScreeningType } from './reference.model';
-import type { Client, ScreeningProfile } from './party.model';
+import type {
+  AlertStatus,
+  AlertTypology,
+  Circuit,
+  Decision,
+  PersonType,
+  ReconciliationSource,
+} from './reference.model';
+import type { UserGroup } from './user.model';
 
-/** Attributs confrontés par le comparateur, dans l'ordre d'affichage. */
-export type MatchAttribute =
-  | 'lastName'
-  | 'firstName'
-  | 'birthDate'
-  | 'nationality'
-  | 'residenceCountry'
-  | 'address'
-  | 'birthPlace'
-  | 'occupation';
+/**
+ * Une ligne du tableau de rapprochement par similarité. La première ligne
+ * porte la source `PERSON` (les données du référentiel), les suivantes les
+ * fiches `FACTIVA` rapprochées, avec leur taux.
+ */
+export interface ReconciliationRow {
+  readonly source: ReconciliationSource;
+  /** Taux de similarité en %, absent sur la ligne de référence. */
+  readonly rate: number | null;
+  readonly surname: string | null;
+  readonly alternateName: string | null;
+  readonly usualGivenName: string | null;
+  readonly givenNames: string | null;
+  readonly gender: string | null;
+  readonly birthDate: string | null;
+  readonly birthYear: string | null;
+  readonly birthPlaceCode: string | null;
+  readonly birthCountry: string | null;
+  readonly addressCountryCode: string | null;
+  readonly citizenshipCountry: string | null;
+}
 
-export const MATCH_ATTRIBUTE_LABELS: Record<MatchAttribute, string> = {
-  lastName: 'Nom',
-  firstName: 'Prénom',
-  birthDate: 'Date de naissance',
-  nationality: 'Nationalité',
-  residenceCountry: 'Pays de résidence',
-  address: 'Adresse',
-  birthPlace: 'Lieu de naissance',
-  occupation: 'Profession',
+/** Action tracée dans l'onglet « Alert history ». */
+export type AlertHistoryAction =
+  'ALERT_GENERATED' | 'ALERT_ASSIGNED' | 'STATUS_CHANGED' | 'COMMENT_ADDED' | 'DECISION_TAKEN';
+
+export const ALERT_HISTORY_ACTION_LABELS: Record<AlertHistoryAction, string> = {
+  ALERT_GENERATED: 'Alert generated',
+  ALERT_ASSIGNED: 'Alert assigned',
+  STATUS_CHANGED: 'Status changed',
+  COMMENT_ADDED: 'Comment added',
+  DECISION_TAKEN: 'Decision taken',
 };
 
 /**
- * Contribution d'un attribut au score global. Le poids permet à l'analyste de
- * comprendre pourquoi une divergence d'adresse pèse moins qu'une divergence de
- * date de naissance.
+ * Événement d'historique. Le journal est traité comme un registre en écriture
+ * seule : aucun écran n'expose de modification ni de suppression d'entrée.
  */
-export interface MatchCriterion {
-  readonly attribute: MatchAttribute;
-  readonly score: number;
-  /** Poids de l'attribut dans le score global, en % (somme = 100). */
-  readonly weight: number;
-  readonly result: ComparisonResult;
-  /** Explication en clair du calcul, affichée au survol. */
-  readonly rationale: string;
-}
-
-/** Une ligne du comparateur client / fiche listée. */
-export interface ComparisonRow {
-  readonly attribute: MatchAttribute;
-  readonly label: string;
-  readonly clientValue: string | null;
-  readonly profileValue: string | null;
-  readonly result: ComparisonResult;
-  readonly score: number;
-  readonly weight: number;
-  readonly rationale: string;
-}
-
-export interface MatchDetail {
-  /** Score global de rapprochement, en %. */
-  readonly score: number;
-  readonly criteria: readonly MatchCriterion[];
-  /** Identifiant de l'alias de la fiche ayant produit le meilleur score. */
-  readonly matchedAliasId: string;
-  readonly algorithm: string;
-  readonly computedAt: string;
-}
-
-export interface AlertAssignment {
-  readonly userId: string;
-  readonly userName: string;
-  readonly userLevel: 'LEVEL_1' | 'LEVEL_2' | 'ADMIN';
-  readonly userHue: number;
-  readonly assignedAt: string;
-  readonly assignedByName: string;
-}
-
-export interface AlertResolution {
-  readonly decision: Decision;
-  readonly decidedById: string;
-  readonly decidedByName: string;
-  readonly decidedByLevel: 'LEVEL_1' | 'LEVEL_2' | 'ADMIN';
-  readonly decidedAt: string;
-  readonly comment: string;
-  /** Niveau ayant prononcé la décision : 1 pour l'homonymie, 2 sinon. */
-  readonly level: 1 | 2;
+export interface AlertHistoryEvent {
+  readonly id: string;
+  readonly alertId: number;
+  /** Horodatage au format JJ/MM/AAAA HH:MM. */
+  readonly date: string;
+  readonly action: AlertHistoryAction;
+  /** Identifiant de connexion de l'auteur, `null` pour le moteur de screening. */
+  readonly user: string | null;
+  readonly userGroup: UserGroup | null;
+  readonly previousValue: string | null;
+  readonly newValue: string | null;
+  readonly comment: string | null;
 }
 
 export interface Alert {
-  readonly id: string;
-  /** Référence métier lisible, du type A-82931. */
+  /** Identifiant métier, affiché en colonne « Alert ID ». */
+  readonly id: number;
+  /** Référence lisible du type ALERTE-2026-001, affichée sur le profil client. */
   readonly reference: string;
-  readonly type: ScreeningType;
   readonly status: AlertStatus;
-  readonly priority: Priority;
-  readonly subsidiaryId: string;
+  readonly typology: AlertTypology;
 
-  readonly client: Client;
-  readonly profile: ScreeningProfile;
-  readonly match: MatchDetail;
+  readonly personId: string;
+  readonly personType: PersonType;
+  readonly systemId: string;
+  readonly entity: string;
+  readonly subEntity: string;
 
-  readonly generatedAt: string;
-  readonly assignment: AlertAssignment | null;
-  readonly resolution: AlertResolution | null;
+  /** Date de génération, au format JJ/MM/AAAA. */
+  readonly alertDate: string;
+  /** Horodatage complet, affiché sur l'écran de traitement. */
+  readonly alertDateTime: string;
 
-  /** Résumé de la dernière action, affiché en colonne d'inbox. */
-  readonly lastActionLabel: string;
-  readonly lastActionAt: string;
+  /** Taux de similarité maximal du rapprochement, en %. */
+  readonly maxRate: number;
+  /** Identifiant de la fiche du fournisseur de données, absent pour un HRTC. */
+  readonly factivaId: string | null;
+  /**
+   * Détail affiché sur le profil client : référence de la fiche listée, ou
+   * code pays pour une alerte de pays tiers à haut risque.
+   */
+  readonly detail: string;
+  readonly circuit: Circuit;
 
-  readonly commentCount: number;
-  /** Nombre de fois que l'alerte a été rouverte après clôture. */
-  readonly reopenCount: number;
-  /** Nom du scénario de screening ayant déclenché l'alerte. */
-  readonly triggeredBy: string;
-  readonly batchId: string;
+  readonly userGroup: UserGroup | null;
+  /** Identifiant de connexion de l'analyste affecté. */
+  readonly user: string | null;
+
+  readonly reconciliation: readonly ReconciliationRow[];
+
+  readonly decision: Decision | null;
+  readonly justification: string | null;
+  /** Date de traitement, au format JJ/MM/AAAA. */
+  readonly processedAt: string | null;
 }
 
 /* -----------------------------------------------------------------------------
    Calculs dérivés — sans effet de bord, réutilisables partout
    -------------------------------------------------------------------------- */
 
-/** Âge de l'alerte en heures depuis sa génération. */
-export function alertAgeHours(alert: Alert, now: Date = new Date()): number {
-  return (now.getTime() - new Date(alert.generatedAt).getTime()) / 3_600_000;
+/** Convertit une date JJ/MM/AAAA en clé triable AAAAMMJJ. */
+export function sortableDate(date: string | null): string {
+  if (!date) return '';
+  const [day, month, year] = date.split(/[/ ]/);
+  return `${year ?? ''}${month ?? ''}${day ?? ''}`;
 }
 
-/** Durée de traitement en heures, de la génération à la décision. */
-export function processingHours(alert: Alert): number | null {
-  if (!alert.resolution) return null;
-  const from = new Date(alert.generatedAt).getTime();
-  const to = new Date(alert.resolution.decidedAt).getTime();
-  return (to - from) / 3_600_000;
-}
-
-/** Une alerte est en retard lorsqu'elle dépasse le délai attendu de sa priorité. */
-export function isOverdue(alert: Alert, slaHours: number, now: Date = new Date()): boolean {
-  if (alert.resolution) return false;
-  return alertAgeHours(alert, now) > slaHours;
-}
-
-/** Construit les lignes du comparateur à partir du client et de la fiche. */
-export function buildComparisonRows(
-  client: Client,
-  profile: ScreeningProfile,
-  criteria: readonly MatchCriterion[],
-  overrides?: Partial<Record<MatchAttribute, string | null>>,
-): ComparisonRow[] {
-  const clientValues: Record<MatchAttribute, string | null> = {
-    lastName: client.lastName,
-    firstName: client.firstName,
-    birthDate: client.birthDate,
-    nationality: client.nationality,
-    residenceCountry: client.residenceCountry,
-    address: client.address ? `${client.address.city}, ${client.address.country}` : null,
-    birthPlace: client.birthPlace,
-    occupation: client.occupation,
-  };
-
-  const profileValues: Record<MatchAttribute, string | null> = {
-    lastName: profile.lastName,
-    firstName: profile.firstName,
-    birthDate: profile.birthDate,
-    nationality: profile.nationality,
-    residenceCountry: profile.countries[0] ?? null,
-    address: profile.address ? `${profile.address.city}, ${profile.address.country}` : null,
-    birthPlace: profile.birthPlace,
-    occupation: profile.positions[0]?.title ?? null,
-  };
-
-  return criteria.map((criterion) => ({
-    attribute: criterion.attribute,
-    label: MATCH_ATTRIBUTE_LABELS[criterion.attribute],
-    clientValue: clientValues[criterion.attribute],
-    profileValue: overrides?.[criterion.attribute] ?? profileValues[criterion.attribute],
-    result: criterion.result,
-    score: criterion.score,
-    weight: criterion.weight,
-    rationale: criterion.rationale,
-  }));
+/** Taux formaté comme dans les corbeilles : « 99.5202 % ». */
+export function formatRate(rate: number | null): string {
+  if (rate === null) return '-';
+  return `${Number(rate.toFixed(4))} %`;
 }

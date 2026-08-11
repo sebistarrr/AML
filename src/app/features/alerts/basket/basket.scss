@@ -1,0 +1,156 @@
+/* Corbeilles d'alertes — gabarit repris des maquettes de corbeille. */
+
+.basket {
+  display: block;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 20px 24px;
+}
+
+.basket__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+}
+
+/* Raccourci discret vers les filtres, à l'aplomb de la première colonne. */
+.basket__tune {
+  color: var(--navy);
+}
+
+.basket__toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* --- Menu « Actions » ------------------------------------------------------ */
+
+.menu {
+  position: relative;
+}
+
+.menu__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: var(--z-sticky);
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  animation: scale-in var(--dur-fast) var(--ease-out);
+}
+
+.menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu__item:hover {
+  background: var(--blue-50);
+}
+
+.menu__item .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--navy);
+}
+
+/* --- Tableau --------------------------------------------------------------- */
+
+.col-check {
+  width: 48px;
+}
+
+.col-check input {
+  accent-color: var(--navy);
+  width: 16px;
+  height: 16px;
+}
+
+.col-action {
+  width: 56px;
+}
+
+/* --- Panneau de filtres ----------------------------------------------------- */
+
+.filters {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.filters__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.filters__status {
+  margin: 0;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.filters__status legend {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.filters__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.filters__check input {
+  accent-color: var(--navy);
+  width: 16px;
+  height: 16px;
+}
+
+/* --- Modale d'affectation ---------------------------------------------------- */
+
+.assign {
+  display: grid;
+  gap: 14px;
+}
+
+.assign__count {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .basket {
+    padding: 0 12px 20px;
+  }
+
+  .basket__toolbar {
+    flex-wrap: wrap;
+  }
+
+  .filters__pair {
+    grid-template-columns: 1fr;
+  }
+}

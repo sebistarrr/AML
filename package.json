@@ -1,5 +1,5 @@
 {
-  "name": "vigilance-lcb-ft",
+  "name": "european-tower-of-control",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -29,5 +29,5 @@
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   },
-  "description": "Plateforme de traitement des alertes de screening LCB-FT (sanctions, PEP, RCA)"
+  "description": "Plateforme de traitement des alertes de screening LCB-FT (Sanction, PEP, RCA, HRTC)"
 }

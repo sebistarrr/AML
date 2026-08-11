@@ -1,0 +1,209 @@
+<div class="workspace">
+  <section class="search-workbench" aria-label="Person search">
+    <div class="search-topline">
+      <div class="type-tabs" role="tablist" aria-label="Person type">
+        <button
+          type="button"
+          role="tab"
+          class="type-tab"
+          [class.active]="type() === 'NATURAL'"
+          [attr.aria-selected]="type() === 'NATURAL'"
+          (click)="selectType('NATURAL')"
+        >
+          <span class="material-symbols-outlined">person</span>
+          <span>Natural person</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="type-tab"
+          [class.active]="type() === 'LEGAL'"
+          [attr.aria-selected]="type() === 'LEGAL'"
+          (click)="selectType('LEGAL')"
+        >
+          <span class="material-symbols-outlined">apartment</span>
+          <span>Legal entity</span>
+        </button>
+      </div>
+
+      <p class="search-hint">
+        <span class="material-symbols-outlined">info</span>
+        Enter at least one criterion
+      </p>
+    </div>
+
+    <form class="criteria-area" (submit)="$event.preventDefault(); search()">
+      @if (type() === 'NATURAL') {
+        <div class="criteria-grid natural-grid">
+          <label class="input-field featured">
+            <span>Person identifier</span>
+            <input
+              type="text"
+              autocomplete="off"
+              placeholder="Enter a person identifier"
+              [value]="criteria().personId"
+              (input)="patch('personId', $any($event.target).value)"
+            />
+          </label>
+          <label class="input-field">
+            <span>Surname</span>
+            <input
+              type="text"
+              autocomplete="off"
+              placeholder="Enter a surname"
+              [value]="criteria().surname"
+              (input)="patch('surname', $any($event.target).value)"
+            />
+          </label>
+          <label class="input-field">
+            <span>Given name</span>
+            <input
+              type="text"
+              autocomplete="off"
+              placeholder="Enter a given name"
+              [value]="criteria().givenName"
+              (input)="patch('givenName', $any($event.target).value)"
+            />
+          </label>
+          <label class="input-field">
+            <span>Date of birth</span>
+            <input
+              type="text"
+              inputmode="numeric"
+              maxlength="10"
+              autocomplete="off"
+              placeholder="DD/MM/YYYY"
+              [value]="criteria().birthDate"
+              (input)="onBirthDateInput($any($event.target).value)"
+            />
+          </label>
+        </div>
+      } @else {
+        <div class="criteria-grid legal-grid">
+          <label class="input-field featured">
+            <span>Person identifier</span>
+            <input
+              type="text"
+              autocomplete="off"
+              placeholder="Enter a person identifier"
+              [value]="criteria().personId"
+              (input)="patch('personId', $any($event.target).value)"
+            />
+          </label>
+          <label class="input-field">
+            <span>Company name</span>
+            <input
+              type="text"
+              autocomplete="off"
+              placeholder="Enter a company name"
+              [value]="criteria().companyName"
+              (input)="patch('companyName', $any($event.target).value)"
+            />
+          </label>
+          <label class="input-field">
+            <span>Company identifier</span>
+            <input
+              type="text"
+              autocomplete="off"
+              placeholder="Enter a company identifier"
+              [value]="criteria().companyId"
+              (input)="patch('companyId', $any($event.target).value)"
+            />
+          </label>
+        </div>
+      }
+
+      <div class="search-actions">
+        <button type="button" class="action secondary" [disabled]="!canClear()" (click)="clear()">
+          <span class="material-symbols-outlined">restart_alt</span>
+          Clear
+        </button>
+        <button type="submit" class="action primary" [disabled]="!canSearch()">
+          <span class="material-symbols-outlined">search</span>
+          Search
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="results-card" aria-live="polite">
+    <div class="results-bar">
+      <div>
+        <strong>Search results</strong>
+        @if (searched()) {
+          <span class="count">{{ results().length }}</span>
+        }
+      </div>
+      <span class="result-status">{{ statusLabel() }}</span>
+    </div>
+
+    @if (results().length) {
+      <div class="table-shell">
+        <table>
+          <thead>
+            <tr>
+              @for (column of columns(); track column) {
+                <th scope="col">{{ column }}</th>
+              }
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (person of results(); track person.id) {
+              <tr>
+                <td class="identifier">{{ person.id }}</td>
+                <td>{{ person.systemId }}</td>
+
+                @if (type() === 'NATURAL') {
+                  <td>{{ person.identity?.surname | dash }}</td>
+                  <td>{{ person.identity?.alternateName | dash }}</td>
+                  <td>{{ person.identity?.usualGivenName | dash }}</td>
+                  <td>{{ person.identity?.givenNames | dash }}</td>
+                  <td>{{ person.identity?.gender | dash }}</td>
+                  <td>{{ person.identity?.birthDate | dash }}</td>
+                  <td>{{ person.identity?.birthPlaceCode | dash }}</td>
+                  <td>{{ person.identity?.birthCountry | dash }}</td>
+                  <td class="is-entity">{{ person.entity }}</td>
+                  <td class="is-entity">{{ person.subEntity }}</td>
+                } @else {
+                  <td>{{ person.company?.companyName | dash }}</td>
+                  <td>{{ person.company?.legalStatus | dash }}</td>
+                  <td>{{ person.company?.reference | dash }}</td>
+                  <td>{{ person.company?.incorporationCountry | dash }}</td>
+                  <td>{{ person.company?.activityDomain | dash }}</td>
+                  <td>{{ person.company?.creationDate | dash }}</td>
+                  <td>{{ person.company?.companyIdentifier | dash }}</td>
+                }
+
+                <td>
+                  <button
+                    type="button"
+                    class="open-profile"
+                    (click)="openProfile(person)"
+                    [attr.aria-label]="'Consulter le profil de risque de ' + person.id"
+                  >
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager">
+        <span>Items per page</span>
+        <select aria-label="Items per page">
+          <option>10</option>
+        </select>
+        <strong>{{ rangeLabel() }}</strong>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <div class="empty-visual"><span class="material-symbols-outlined">person_search</span></div>
+        <h2>{{ emptyTitle() }}</h2>
+        <p>{{ emptyBody() }}</p>
+      </div>
+    }
+  </section>
+</div>

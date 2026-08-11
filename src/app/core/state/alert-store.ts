@@ -1,470 +1,248 @@
+/**
+ * Source de vérité des alertes.
+ *
+ * Toutes les mutations passent par ce store, et chacune écrit son propre
+ * événement d'historique : il n'existe aucun chemin permettant de modifier une
+ * alerte sans laisser de trace. Le journal est traité comme un registre en
+ * écriture seule — aucun écran n'expose de modification ni de suppression
+ * d'entrée.
+ */
+
 import { Injectable, computed, inject, signal } from '@angular/core';
 
-import {
-  ALERT_STATUS_META,
-  DECISION_META,
-  PRIORITY_META,
-  alertAgeHours,
-  isOverdue,
-  processingHours,
-  type Alert,
-  type AlertComment,
-  type AlertStatus,
-  type AuditAction,
-  type AuditEvent,
-  type Decision,
-  type ScreeningType,
-} from '../models';
-import { ALERTS } from '../data/alerts.data';
-import { AUDIT_BY_ALERT, COMMENTS_BY_ALERT } from '../data/activity.data';
 import { AuthService } from '../auth/auth.service';
+import { ALERTS } from '../data/alerts.data';
+import { findPerson } from '../data/persons.data';
+import {
+  DECISION_META,
+  isClosedStatus,
+  type Alert,
+  type AlertHistoryEvent,
+  type Decision,
+  type Person,
+  type UserGroup,
+} from '../models';
 
-/** Latence simulée, pour que les états de chargement soient réellement visibles. */
-const LATENCY_MS = 420;
+/** Commentaire libre porté par une alerte. */
+export interface AlertComment {
+  readonly id: string;
+  readonly alertId: number;
+  readonly user: string;
+  readonly userGroup: UserGroup;
+  readonly createdAt: string;
+  readonly body: string;
+}
 
-let auditSequence = 900_000;
-let commentSequence = 900_000;
+function now(): string {
+  const date = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
-/**
- * Source de vérité des alertes côté client.
- *
- * Toutes les mutations passent par ce service, et chacune écrit son propre
- * événement d'audit : il est impossible de modifier une alerte sans laisser de
- * trace. Le journal n'expose ni modification ni suppression — il ne fait que
- * croître.
- */
+/** Historique initial reconstitué à partir du cycle de vie de l'alerte. */
+function initialHistory(alert: Alert): AlertHistoryEvent[] {
+  const events: AlertHistoryEvent[] = [
+    {
+      id: `${alert.id}-generated`,
+      alertId: alert.id,
+      date: alert.alertDateTime,
+      action: 'ALERT_GENERATED',
+      user: null,
+      userGroup: null,
+      previousValue: null,
+      newValue: 'TO_CLEAR_L1',
+      comment: null,
+    },
+  ];
+
+  if (alert.user) {
+    events.push({
+      id: `${alert.id}-assigned`,
+      alertId: alert.id,
+      date: alert.alertDateTime,
+      action: 'ALERT_ASSIGNED',
+      user: alert.user,
+      userGroup: alert.userGroup,
+      previousValue: null,
+      newValue: alert.user,
+      comment: null,
+    });
+  }
+
+  if (alert.status !== 'TO_CLEAR_L1') {
+    events.push({
+      id: `${alert.id}-status`,
+      alertId: alert.id,
+      date: alert.alertDateTime,
+      action: 'STATUS_CHANGED',
+      user: alert.user,
+      userGroup: alert.userGroup,
+      previousValue: 'TO_CLEAR_L1',
+      newValue: alert.status,
+      comment: null,
+    });
+  }
+
+  if (alert.decision && alert.processedAt) {
+    events.push({
+      id: `${alert.id}-decision`,
+      alertId: alert.id,
+      date: `${alert.processedAt} 16:04`,
+      action: 'DECISION_TAKEN',
+      user: alert.user,
+      userGroup: alert.userGroup,
+      previousValue: null,
+      newValue: DECISION_META[alert.decision].label,
+      comment: alert.justification,
+    });
+  }
+
+  return events;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AlertStore {
   private readonly auth = inject(AuthService);
 
   private readonly _alerts = signal<readonly Alert[]>(ALERTS);
-  private readonly _comments = signal<ReadonlyMap<string, readonly AlertComment[]>>(COMMENTS_BY_ALERT);
-  private readonly _audit = signal<ReadonlyMap<string, readonly AuditEvent[]>>(AUDIT_BY_ALERT);
+  private readonly _comments = signal<readonly AlertComment[]>([]);
+  private readonly _history = signal<readonly AlertHistoryEvent[]>(ALERTS.flatMap(initialHistory));
 
-  private readonly _loading = signal(true);
-  private readonly _error = signal<string | null>(null);
-  private readonly _lastRefreshedAt = signal(new Date().toISOString());
+  private sequence = 0;
 
-  readonly loading = this._loading.asReadonly();
+  readonly alerts = this._alerts.asReadonly();
+  readonly comments = this._comments.asReadonly();
+  readonly history = this._history.asReadonly();
 
-  /** Message d'échec du dernier chargement, `null` en fonctionnement normal. */
-  readonly error = this._error.asReadonly();
+  /** Alertes encore ouvertes — corbeille « Alert Basket ». */
+  readonly openAlerts = computed(() =>
+    this._alerts().filter((alert) => !isClosedStatus(alert.status)),
+  );
 
-  readonly lastRefreshedAt = this._lastRefreshedAt.asReadonly();
-
-  /** Toutes les alertes, tous périmètres confondus. */
-  readonly allAlerts = this._alerts.asReadonly();
-
-  /**
-   * Index par identifiant. Les écrans d'investigation et les notifications
-   * résolvent une alerte à chaque cycle de rendu ; un parcours linéaire de la
-   * collection à chaque accès se paierait sur les listes volumineuses.
-   */
-  private readonly byIdIndex = computed(() => new Map(this._alerts().map((a) => [a.id, a] as const)));
-
-  /** Alertes du périmètre actif — la base de tous les écrans métier. */
-  readonly alerts = computed(() => {
-    const subsidiaryId = this.auth.activeSubsidiaryId();
-    return this._alerts().filter((alert) => alert.subsidiaryId === subsidiaryId);
-  });
-
-  readonly openAlerts = computed(() => this.alerts().filter((alert) => alert.status !== 'PROCESSED'));
-
+  /** Alertes traitées — corbeille « Processed alerts ». */
   readonly processedAlerts = computed(() =>
-    this.alerts().filter((alert) => alert.status === 'PROCESSED'),
+    this._alerts().filter((alert) => isClosedStatus(alert.status)),
   );
 
-  readonly unassignedAlerts = computed(() =>
-    this.alerts().filter((alert) => alert.status !== 'PROCESSED' && !alert.assignment),
-  );
-
+  /** Alertes ouvertes affectées au compte courant — corbeille « My alerts ». */
   readonly myAlerts = computed(() => {
     const userId = this.auth.currentUser().id;
-    return this.alerts().filter(
-      (alert) => alert.status !== 'PROCESSED' && alert.assignment?.userId === userId,
-    );
+    return this.openAlerts().filter((alert) => alert.user === userId);
   });
 
-  /** Alertes hors délai au regard du niveau de service de leur priorité. */
-  readonly overdueAlerts = computed(() =>
-    this.openAlerts().filter((alert) => isOverdue(alert, PRIORITY_META[alert.priority].slaHours)),
-  );
-
-  constructor() {
-    this.refresh();
+  byId(alertId: number): Alert | undefined {
+    return this._alerts().find((alert) => alert.id === alertId);
   }
 
-  /* ---------------------------------------------------------------------------
-     Lecture
-     ------------------------------------------------------------------------ */
-
-  byId(alertId: string): Alert | undefined {
-    return this.byIdIndex().get(alertId);
+  personOf(alert: Alert): Person | undefined {
+    return findPerson(alert.personId);
   }
 
-  byReference(reference: string): Alert | undefined {
-    const needle = reference.toUpperCase();
-    return this._alerts().find((alert) => alert.reference.toUpperCase() === needle);
+  alertsOfPerson(personId: string): readonly Alert[] {
+    return this._alerts().filter((alert) => alert.personId === personId);
   }
 
-  commentsFor(alertId: string): readonly AlertComment[] {
-    return this._comments().get(alertId) ?? [];
+  commentsOf(alertId: number): readonly AlertComment[] {
+    return this._comments().filter((comment) => comment.alertId === alertId);
   }
 
-  auditFor(alertId: string): readonly AuditEvent[] {
-    return this._audit().get(alertId) ?? [];
+  historyOf(alertId: number): readonly AlertHistoryEvent[] {
+    return this._history()
+      .filter((event) => event.alertId === alertId)
+      .slice()
+      .reverse();
   }
 
-  /** Alertes voisines dans la file, pour la navigation « suivante / précédente ». */
-  queueNeighbours(alertId: string): { previous: Alert | null; next: Alert | null; index: number; total: number } {
-    const queue = this.openAlerts();
-    const index = queue.findIndex((alert) => alert.id === alertId);
-    if (index === -1) return { previous: null, next: null, index: -1, total: queue.length };
-    return {
-      previous: index > 0 ? queue[index - 1]! : null,
-      next: index < queue.length - 1 ? queue[index + 1]! : null,
-      index,
-      total: queue.length,
-    };
-  }
+  /* --- Mutations ---------------------------------------------------------- */
 
-  /* ---------------------------------------------------------------------------
-     Chargement
-     ------------------------------------------------------------------------ */
-
-  refresh(): void {
-    this._loading.set(true);
-    this._error.set(null);
-
-    setTimeout(() => {
-      this._loading.set(false);
-
-      /* Le prototype sert des données locales : le seul échec réaliste est la
-         perte de connexion, qui empêcherait d'atteindre le référentiel. */
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        this._error.set(
-          "Le référentiel des alertes est injoignable : la connexion réseau semble interrompue.",
-        );
-        return;
-      }
-
-      this._lastRefreshedAt.set(new Date().toISOString());
-    }, LATENCY_MS);
-  }
-
-  /* ---------------------------------------------------------------------------
-     Mutations — chacune produit son événement d'audit
-     ------------------------------------------------------------------------ */
-
-  /** Affecte l'alerte à un analyste, ou retire l'affectation avec `null`. */
-  assign(alertId: string, userId: string | null): void {
+  /** Affecte l'alerte à un analyste et trace le commentaire d'affectation. */
+  assign(alertId: number, group: UserGroup, user: string, comment: string): void {
     const alert = this.byId(alertId);
     if (!alert) return;
-
-    const previous = alert.assignment?.userName ?? 'Non affectée';
-    const actor = this.auth.currentUser();
-    const now = new Date().toISOString();
-
-    if (userId === null) {
-      this.patch(alertId, {
-        assignment: null,
-        status: alert.status === 'ASSIGNED' ? 'TO_PROCESS' : alert.status,
-        lastActionLabel: 'Affectation retirée',
-        lastActionAt: now,
-      });
-      this.appendAudit(alertId, 'ALERT_UNASSIGNED', {
-        previousValue: previous,
-        newValue: 'Non affectée',
-        comment: null,
-      });
-      return;
-    }
-
-    const target = this.auth.allUsers.find((user) => user.id === userId);
-    if (!target) return;
 
     this.patch(alertId, {
-      assignment: {
-        userId: target.id,
-        userName: `${target.firstName} ${target.lastName}`,
-        userLevel: target.level,
-        userHue: target.avatarHue,
-        assignedAt: now,
-        assignedByName: `${actor.firstName} ${actor.lastName}`,
-      },
-      status: alert.status === 'TO_PROCESS' ? 'ASSIGNED' : alert.status,
-      lastActionLabel: 'Alerte affectée',
-      lastActionAt: now,
+      user,
+      userGroup: group,
+      status: alert.status === 'TO_CLEAR_L1' ? 'IN_PROCESS_L1' : alert.status,
     });
 
-    this.appendAudit(alertId, 'ALERT_ASSIGNED', {
-      previousValue: previous,
-      newValue: `${target.firstName} ${target.lastName}`,
-      comment: target.id === actor.id ? "Prise en charge par l'analyste." : null,
-    });
-  }
-
-  /** Marque l'alerte comme en cours dès que l'analyste affecté l'ouvre. */
-  markInProgress(alertId: string): void {
-    const alert = this.byId(alertId);
-    if (!alert) return;
-    if (alert.status !== 'ASSIGNED') return;
-    if (alert.assignment?.userId !== this.auth.currentUser().id) return;
-
-    this.patch(alertId, { status: 'IN_PROGRESS', lastActionAt: new Date().toISOString() });
-    this.appendAudit(alertId, 'STATUS_CHANGED', {
-      previousValue: ALERT_STATUS_META.ASSIGNED.label,
-      newValue: ALERT_STATUS_META.IN_PROGRESS.label,
-      comment: null,
-    });
-  }
-
-  addComment(alertId: string, body: string): void {
-    const trimmed = body.trim();
-    if (!trimmed) return;
-
-    const alert = this.byId(alertId);
-    if (!alert) return;
-
-    const actor = this.auth.currentUser();
-    const now = new Date().toISOString();
-
-    const comment: AlertComment = {
-      id: `CMT-${commentSequence++}`,
+    this.trace({
       alertId,
-      authorId: actor.id,
-      authorName: `${actor.firstName} ${actor.lastName}`,
-      authorRole: this.auth.levelMeta().label,
-      authorLevel: actor.level,
-      authorHue: actor.avatarHue,
-      createdAt: now,
-      body: trimmed,
-    };
-
-    this._comments.update((map) => {
-      const next = new Map(map);
-      next.set(alertId, [...(map.get(alertId) ?? []), comment]);
-      return next;
+      action: 'ALERT_ASSIGNED',
+      previousValue: alert.user,
+      newValue: user,
+      comment: comment.trim() || null,
     });
+  }
 
-    this.patch(alertId, {
-      commentCount: alert.commentCount + 1,
-      lastActionLabel: 'Commentaire ajouté',
-      lastActionAt: now,
-    });
+  addComment(alertId: number, body: string): void {
+    const author = this.auth.currentUser();
+    this._comments.update((comments) => [
+      ...comments,
+      {
+        id: `c-${++this.sequence}`,
+        alertId,
+        user: author.id,
+        userGroup: author.group,
+        createdAt: now(),
+        body: body.trim(),
+      },
+    ]);
 
-    this.appendAudit(alertId, 'COMMENT_ADDED', {
+    this.trace({
+      alertId,
+      action: 'COMMENT_ADDED',
       previousValue: null,
       newValue: null,
-      comment: trimmed,
+      comment: body.trim(),
     });
   }
 
-  /** Mémorise l'alias retenu par l'analyste comme base de comparaison. */
-  retainAlias(alertId: string, aliasId: string): void {
-    const alert = this.byId(alertId);
-    if (!alert || alert.match.matchedAliasId === aliasId) return;
-
-    const previous = alert.profile.aliases.find((a) => a.id === alert.match.matchedAliasId);
-    const next = alert.profile.aliases.find((a) => a.id === aliasId);
-    if (!next) return;
-
-    this.patch(alertId, { match: { ...alert.match, matchedAliasId: aliasId } });
-    this.appendAudit(alertId, 'ALIAS_SELECTED', {
-      previousValue: previous?.fullName ?? null,
-      newValue: `${next.fullName} (${next.score} %)`,
-      comment: null,
-    });
-  }
-
-  /** Escalade au niveau 2. Le commentaire est obligatoire côté appelant. */
-  escalate(alertId: string, comment: string): void {
+  /** Enregistre une décision : statut, justification et date de traitement. */
+  decide(alertId: number, decision: Decision, justification: string): void {
     const alert = this.byId(alertId);
     if (!alert) return;
 
-    const now = new Date().toISOString();
-    this.patch(alertId, {
-      status: 'ESCALATED',
-      lastActionLabel: 'Escalade niveau 2',
-      lastActionAt: now,
-    });
-
-    this.appendAudit(alertId, 'ESCALATED', {
-      previousValue: 'Niveau 1',
-      newValue: 'Niveau 2',
-      comment,
-    });
-  }
-
-  /** Prononce une décision de clôture et fige l'alerte en « traitée ». */
-  decide(alertId: string, decision: Decision, comment: string): void {
-    const alert = this.byId(alertId);
-    if (!alert) return;
-
-    const actor = this.auth.currentUser();
     const meta = DECISION_META[decision];
-    const now = new Date().toISOString();
+    const author = this.auth.currentUser();
 
     this.patch(alertId, {
-      status: 'PROCESSED',
-      resolution: {
-        decision,
-        decidedById: actor.id,
-        decidedByName: `${actor.firstName} ${actor.lastName}`,
-        decidedByLevel: actor.level,
-        decidedAt: now,
-        comment,
-        level: meta.requiredLevel,
-      },
-      lastActionLabel: `Décision : ${meta.label.toLowerCase()}`,
-      lastActionAt: now,
+      status: meta.resultingStatus,
+      decision,
+      justification: justification.trim(),
+      processedAt: now().slice(0, 10),
+      user: author.id,
+      userGroup: author.group,
     });
 
-    this.appendAudit(alertId, 'DECISION_TAKEN', {
-      previousValue: ALERT_STATUS_META[alert.status].label,
-      newValue: `${ALERT_STATUS_META.PROCESSED.label} — ${meta.label}`,
-      comment,
+    this.trace({
+      alertId,
+      action: 'DECISION_TAKEN',
+      previousValue: alert.status,
+      newValue: meta.label,
+      comment: justification.trim(),
     });
   }
 
-  /** Rouvre une alerte traitée. La décision précédente reste au journal. */
-  reopen(alertId: string, reason: string): void {
-    const alert = this.byId(alertId);
-    if (!alert || alert.status !== 'PROCESSED') return;
+  /* --- Écritures internes ------------------------------------------------- */
 
-    const now = new Date().toISOString();
-    const previousDecision = alert.resolution
-      ? `${ALERT_STATUS_META.PROCESSED.label} — ${DECISION_META[alert.resolution.decision].label}`
-      : ALERT_STATUS_META.PROCESSED.label;
-
-    this.patch(alertId, {
-      status: 'REOPENED',
-      resolution: null,
-      reopenCount: alert.reopenCount + 1,
-      lastActionLabel: 'Alerte rouverte',
-      lastActionAt: now,
-    });
-
-    this.appendAudit(alertId, 'ALERT_REOPENED', {
-      previousValue: previousDecision,
-      newValue: ALERT_STATUS_META.REOPENED.label,
-      comment: reason,
-    });
-  }
-
-  /* ---------------------------------------------------------------------------
-     Statistiques du périmètre actif
-     ------------------------------------------------------------------------ */
-
-  readonly stats = computed(() => {
-    const alerts = this.alerts();
-    const open = alerts.filter((alert) => alert.status !== 'PROCESSED');
-    const processed = alerts.filter((alert) => alert.status === 'PROCESSED');
-
-    const durations = processed
-      .map((alert) => processingHours(alert))
-      .filter((hours): hours is number => hours !== null);
-
-    const averageHours =
-      durations.length > 0 ? durations.reduce((sum, h) => sum + h, 0) / durations.length : 0;
-
-    return {
-      total: alerts.length,
-      open: open.length,
-      toProcess: alerts.filter((alert) => alert.status === 'TO_PROCESS').length,
-      assigned: alerts.filter((alert) => alert.status === 'ASSIGNED').length,
-      inProgress: alerts.filter((alert) => alert.status === 'IN_PROGRESS').length,
-      escalated: alerts.filter((alert) => alert.status === 'ESCALATED').length,
-      reopened: alerts.filter((alert) => alert.status === 'REOPENED').length,
-      processed: processed.length,
-      confirmed: processed.filter((alert) => alert.resolution?.decision === 'CONFIRMED').length,
-      neutralized: processed.filter((alert) => alert.resolution?.decision === 'NEUTRALIZED').length,
-      homonym: processed.filter((alert) => alert.resolution?.decision === 'HOMONYM').length,
-      overdue: this.overdueAlerts().length,
-      averageProcessingHours: averageHours,
-      generatedLast7Days: alerts.filter((alert) => alertAgeHours(alert) <= 168).length,
-    };
-  });
-
-  /** Répartition par type de dispositif, pour le graphique du tableau de bord. */
-  readonly byType = computed<readonly { type: ScreeningType; count: number }[]>(() => {
-    const alerts = this.alerts();
-    return (['SANCTION', 'PEP', 'RCA'] as const).map((type) => ({
-      type,
-      count: alerts.filter((alert) => alert.type === type).length,
-    }));
-  });
-
-  readonly byStatus = computed<readonly { status: AlertStatus; count: number }[]>(() => {
-    const alerts = this.alerts();
-    return (
-      ['TO_PROCESS', 'ASSIGNED', 'IN_PROGRESS', 'ESCALATED', 'PROCESSED', 'REOPENED'] as const
-    ).map((status) => ({
-      status,
-      count: alerts.filter((alert) => alert.status === status).length,
-    }));
-  });
-
-  /**
-   * Volume d'alertes générées et traitées par jour sur la période demandée.
-   * Alimente la courbe d'évolution du tableau de bord.
-   */
-  volumeSeries(days: number): readonly { date: string; generated: number; processed: number }[] {
-    const alerts = this.alerts();
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-
-    return Array.from({ length: days }, (_, offset) => {
-      const dayEnd = new Date(today.getTime() - (days - 1 - offset) * 86_400_000);
-      const dayStart = new Date(dayEnd);
-      dayStart.setHours(0, 0, 0, 0);
-
-      const within = (iso: string) => {
-        const time = new Date(iso).getTime();
-        return time >= dayStart.getTime() && time <= dayEnd.getTime();
-      };
-
-      return {
-        date: dayStart.toISOString(),
-        generated: alerts.filter((alert) => within(alert.generatedAt)).length,
-        processed: alerts.filter((alert) => alert.resolution && within(alert.resolution.decidedAt)).length,
-      };
-    });
-  }
-
-  /* ---------------------------------------------------------------------------
-     Écriture interne
-     ------------------------------------------------------------------------ */
-
-  private patch(alertId: string, changes: Partial<Alert>): void {
+  private patch(alertId: number, changes: Partial<Alert>): void {
     this._alerts.update((alerts) =>
       alerts.map((alert) => (alert.id === alertId ? { ...alert, ...changes } : alert)),
     );
   }
 
-  private appendAudit(
-    alertId: string,
-    action: AuditAction,
-    payload: { previousValue: string | null; newValue: string | null; comment: string | null },
-  ): void {
-    const actor = this.auth.currentUser();
-    const event: AuditEvent = {
-      id: `EVT-${auditSequence++}`,
-      alertId,
-      timestamp: new Date().toISOString(),
-      action,
-      actorId: actor.id,
-      actorName: `${actor.firstName} ${actor.lastName}`,
-      actorRole: this.auth.levelMeta().label,
-      actorLevel: actor.level,
-      sourceIp: '10.24.8.114',
-      ...payload,
-    };
-
-    this._audit.update((map) => {
-      const next = new Map(map);
-      next.set(alertId, [event, ...(map.get(alertId) ?? [])]);
-      return next;
-    });
+  private trace(event: Omit<AlertHistoryEvent, 'id' | 'date' | 'user' | 'userGroup'>): void {
+    const author = this.auth.currentUser();
+    this._history.update((history) => [
+      ...history,
+      {
+        ...event,
+        id: `h-${++this.sequence}`,
+        date: now(),
+        user: author.id,
+        userGroup: author.group,
+      },
+    ]);
   }
 }

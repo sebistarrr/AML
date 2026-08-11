@@ -1,33 +1,29 @@
 <!doctype html>
-<html lang="fr" data-theme="dark">
+<html lang="fr" data-theme="light">
   <head>
     <meta charset="utf-8" />
-    <title>Vigilance — Plateforme LCB-FT</title>
+    <title>European Tower of Control</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Plateforme de traitement des alertes de screening LCB-FT : sanctions, PEP et RCA."
+      content="Plateforme de traitement des alertes de screening LCB-FT : sanctions, PEP, RCA et pays tiers à haut risque."
     />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Les polices Inter et Material Symbols sont embarquées dans la feuille
+         de styles de l'application : aucune requête vers un tiers. -->
 
     <script>
       // Applique le thème mémorisé avant le premier rendu pour éviter tout flash.
       (function () {
         try {
-          var stored = localStorage.getItem('vigilance.theme');
+          var stored = localStorage.getItem('etc.theme');
           document.documentElement.dataset.theme =
-            stored === 'light' || stored === 'dark' ? stored : 'dark';
+            stored === 'light' || stored === 'dark' ? stored : 'light';
         } catch (e) {
-          document.documentElement.dataset.theme = 'dark';
+          document.documentElement.dataset.theme = 'light';
         }
       })();
     </script>

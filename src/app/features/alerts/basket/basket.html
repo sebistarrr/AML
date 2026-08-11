@@ -1,0 +1,406 @@
+<section class="basket" [attr.aria-label]="title()">
+  <div class="basket__toolbar">
+    <button
+      type="button"
+      class="btn btn--quiet btn--icon basket__tune"
+      (click)="openFilters()"
+      aria-label="Ouvrir les filtres"
+    >
+      <span class="material-symbols-outlined">tune</span>
+    </button>
+
+    <div class="basket__toolbar-actions">
+      @if (selectable()) {
+        <div class="menu">
+          <button
+            type="button"
+            class="btn"
+            [attr.aria-expanded]="actionsOpen()"
+            aria-haspopup="menu"
+            (click)="actionsOpen.set(!actionsOpen())"
+          >
+            Actions
+            <span class="material-symbols-outlined">expand_more</span>
+          </button>
+
+          @if (actionsOpen()) {
+            <div class="menu__list" role="menu">
+              <button type="button" role="menuitem" class="menu__item" (click)="openAssign()">
+                <span class="material-symbols-outlined">sync_alt</span>
+                Assign an alert
+              </button>
+              <button type="button" role="menuitem" class="menu__item" (click)="exportSelection()">
+                <span class="material-symbols-outlined">download</span>
+                Export
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <button type="button" class="btn" (click)="openFilters()">
+        Filter and sort
+        <span class="material-symbols-outlined">tune</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="table-shell">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            @if (selectable()) {
+              <th scope="col" class="col-check">
+                <input
+                  type="checkbox"
+                  [checked]="allOnPageSelected()"
+                  (change)="toggleAllOnPage()"
+                  aria-label="Sélectionner toutes les alertes de la page"
+                />
+              </th>
+            }
+
+            @for (column of columns; track column.key) {
+              <th scope="col" [attr.aria-sort]="ariaSort(column.key)">
+                <button
+                  type="button"
+                  class="th-sort"
+                  [attr.aria-sort]="ariaSort(column.key)"
+                  (click)="sortBy(column.key)"
+                >
+                  {{ column.label }}
+                  <span class="material-symbols-outlined">
+                    {{
+                      ariaSort(column.key) === 'none'
+                        ? 'unfold_more'
+                        : ariaSort(column.key) === 'ascending'
+                          ? 'arrow_upward'
+                          : 'arrow_downward'
+                    }}
+                  </span>
+                </button>
+              </th>
+            }
+
+            <th scope="col" class="col-action"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (alert of rows(); track alert.id) {
+            <tr>
+              @if (selectable()) {
+                <td class="col-check">
+                  <input
+                    type="checkbox"
+                    [checked]="isSelected(alert.id)"
+                    (change)="toggleRow(alert.id)"
+                    [attr.aria-label]="'Sélectionner l’alerte ' + alert.id"
+                  />
+                </td>
+              }
+
+              <td>{{ alert.status }}</td>
+              <td>{{ alert.personId }}</td>
+              <td>{{ alert.systemId }}</td>
+              <td>{{ personTypeMeta[alert.personType].label }}</td>
+              <td class="is-date">{{ alert.alertDate }}</td>
+              <td>{{ alert.id }}</td>
+              <td>{{ typologyMeta[alert.typology].label }}</td>
+              <td>{{ alert.subEntity }}</td>
+              <td>{{ alert.entity }}</td>
+              <td>{{ alert.userGroup ? groupMeta[alert.userGroup].label : '-' }}</td>
+              <td>{{ alert.user | dash }}</td>
+              <td>{{ alert.maxRate | rate }}</td>
+
+              <td class="col-action">
+                <button
+                  type="button"
+                  class="row-action"
+                  (click)="open(alert)"
+                  [attr.aria-label]="'Consulter l’alerte ' + alert.id"
+                >
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td
+                class="is-empty"
+                [attr.colspan]="selectable() ? columns.length + 2 : columns.length + 1"
+              >
+                Aucune alerte ne correspond aux critères de recherche.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="paginator">
+    <label>
+      Items per page
+      <select [value]="pageSize()" (change)="changePageSize($any($event.target).value)">
+        <option [value]="10">10</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+      </select>
+    </label>
+
+    <span>{{ rangeLabel() }}</span>
+
+    <span class="paginator__pages">
+      <button type="button" (click)="goTo(0)" [disabled]="page() === 0" aria-label="Première page">
+        <span class="material-symbols-outlined">first_page</span>
+      </button>
+      <button
+        type="button"
+        (click)="goTo(page() - 1)"
+        [disabled]="page() === 0"
+        aria-label="Page précédente"
+      >
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      <button
+        type="button"
+        (click)="goTo(page() + 1)"
+        [disabled]="page() >= pageCount() - 1"
+        aria-label="Page suivante"
+      >
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+      <button
+        type="button"
+        (click)="goTo(pageCount() - 1)"
+        [disabled]="page() >= pageCount() - 1"
+        aria-label="Dernière page"
+      >
+        <span class="material-symbols-outlined">last_page</span>
+      </button>
+    </span>
+  </div>
+</section>
+
+<!-- Panneau de filtres, ouvert par « Filter and sort ». -->
+<app-drawer [open]="filterOpen()" title="Filter" (close)="filterOpen.set(false)">
+  <div class="filters">
+    <fieldset class="filters__status">
+      <legend>Status</legend>
+      @for (status of statusOptions(); track status) {
+        <label class="filters__check">
+          <input
+            type="checkbox"
+            [checked]="isStatusChecked(status)"
+            (change)="toggleStatus(status)"
+          />
+          <span>{{ status }}</span>
+        </label>
+      }
+    </fieldset>
+
+    <label class="field">
+      <span>Person ID</span>
+      <input
+        type="text"
+        [value]="draft().personId"
+        (input)="patchDraft('personId', $any($event.target).value)"
+      />
+    </label>
+
+    <label class="field">
+      <span>System ID</span>
+      <input
+        type="text"
+        [value]="draft().systemId"
+        (input)="patchDraft('systemId', $any($event.target).value)"
+      />
+    </label>
+
+    <label class="field">
+      <span>Person type</span>
+      <select
+        [value]="draft().personType"
+        (change)="patchDraft('personType', $any($event.target).value)"
+      >
+        <option value="">—</option>
+        @for (type of personTypes; track type) {
+          <option [value]="type">{{ personTypeMeta[type].label }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="filters__pair">
+      <label class="field">
+        <span>Start date</span>
+        <input
+          type="date"
+          [value]="draft().startDate"
+          (input)="patchDraft('startDate', $any($event.target).value)"
+        />
+      </label>
+      <label class="field">
+        <span>End date</span>
+        <input
+          type="date"
+          [value]="draft().endDate"
+          (input)="patchDraft('endDate', $any($event.target).value)"
+        />
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Alert ID</span>
+      <input
+        type="text"
+        inputmode="numeric"
+        [value]="draft().alertId"
+        (input)="patchDraft('alertId', $any($event.target).value)"
+      />
+    </label>
+
+    <label class="field">
+      <span>Typology alert</span>
+      <select
+        [value]="draft().typology"
+        (change)="patchDraft('typology', $any($event.target).value)"
+      >
+        <option value="">—</option>
+        @for (typology of typologies; track typology) {
+          <option [value]="typology">{{ typologyMeta[typology].label }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Entity</span>
+      <select [value]="draft().entity" (change)="patchDraft('entity', $any($event.target).value)">
+        <option value="">—</option>
+        @for (entity of entities; track entity) {
+          <option [value]="entity">{{ entity }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Sub-entity</span>
+      <select
+        [value]="draft().subEntity"
+        (change)="patchDraft('subEntity', $any($event.target).value)"
+      >
+        <option value="">—</option>
+        @for (subEntity of subEntities; track subEntity) {
+          <option [value]="subEntity">{{ subEntity }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>User group</span>
+      <select
+        [value]="draft().userGroup"
+        (change)="patchDraft('userGroup', $any($event.target).value)"
+      >
+        <option value="">—</option>
+        @for (group of groups; track group) {
+          <option [value]="group">{{ groupMeta[group].label }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>User</span>
+      <select [value]="draft().user" (change)="patchDraft('user', $any($event.target).value)">
+        <option value="">—</option>
+        @for (user of users; track user) {
+          <option [value]="user">{{ user }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="filters__pair">
+      <label class="field">
+        <span>Min rate (%)</span>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          [value]="draft().minRate"
+          (input)="patchDraft('minRate', $any($event.target).value)"
+        />
+      </label>
+      <label class="field">
+        <span>Max rate (%)</span>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          [value]="draft().maxRate"
+          (input)="patchDraft('maxRate', $any($event.target).value)"
+        />
+      </label>
+    </div>
+  </div>
+
+  <ng-container drawer-actions>
+    <button type="button" class="btn" [disabled]="!hasDraftFilter()" (click)="clearFilters()">
+      Clear filters
+    </button>
+    <button type="button" class="btn btn--primary" (click)="applyFilters()">Search</button>
+  </ng-container>
+</app-drawer>
+
+<!-- Affectation groupée depuis le menu « Actions ». -->
+<app-modal [open]="assignOpen()" title="Assign an alert" (close)="assignOpen.set(false)">
+  <div class="assign">
+    <p class="assign__count">{{ selectionCount() }} alerte(s) sélectionnée(s).</p>
+
+    <label class="field">
+      <span>Group</span>
+      <select
+        [value]="assignGroup()"
+        [disabled]="!canAssignOthers()"
+        (change)="assignGroup.set($any($event.target).value)"
+      >
+        @for (group of groups; track group) {
+          <option [value]="group">{{ group }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>User*</span>
+      <select
+        [value]="assignUser()"
+        [disabled]="!canAssignOthers()"
+        (change)="assignUser.set($any($event.target).value)"
+      >
+        @for (user of users; track user) {
+          <option [value]="user">{{ user }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Comment (1000 characters maximum)</span>
+      <textarea
+        maxlength="1000"
+        [value]="assignComment()"
+        (input)="assignComment.set($any($event.target).value)"
+      ></textarea>
+    </label>
+  </div>
+
+  <ng-container modal-actions>
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="!assignUser()"
+      (click)="confirmAssign()"
+    >
+      Validate
+    </button>
+  </ng-container>
+</app-modal>

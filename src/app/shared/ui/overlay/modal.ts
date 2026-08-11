@@ -3,30 +3,27 @@ import {
   Component,
   ElementRef,
   effect,
-  inject,
   input,
   output,
   viewChild,
 } from '@angular/core';
 
-import { IconComponent } from '../icon/icon';
 import { focusFirst, trapFocus } from '../../util/focus-trap';
 
 /**
  * Boîte de dialogue modale.
  *
  * Coquille générique : elle gère le voile, le focus, la touche Échap et la
- * mise en page. Le contenu et les actions sont projetés par l'appelant, ce qui
- * permet de l'utiliser aussi bien pour une confirmation simple que pour la
- * récapitulation d'une décision réglementaire.
+ * mise en page. Le contenu et les actions sont projetés par l'appelant. Le
+ * gabarit — bandeau de titre gris, corps blanc, action de validation en bas à
+ * droite — est celui des maquettes « Add a comment » et « Assign an alert ».
  */
 @Component({
   selector: 'app-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
   template: `
     @if (open()) {
-      <div class="modal__scrim" (click)="dismissOnBackdrop() && close.emit()" aria-hidden="true"></div>
+      <div class="modal__scrim" (click)="close.emit()" aria-hidden="true"></div>
 
       <div class="modal__wrap">
         <div
@@ -35,37 +32,22 @@ import { focusFirst, trapFocus } from '../../util/focus-trap';
           role="dialog"
           aria-modal="true"
           [attr.aria-label]="title()"
-          [attr.data-size]="size()"
           tabindex="-1"
+          (keydown.escape)="close.emit()"
         >
           <header class="modal__head">
-            @if (tone() !== 'neutral') {
-              <span class="modal__glyph" [attr.data-tone]="tone()">
-                <app-icon [name]="tone() === 'danger' ? 'alert-triangle' : 'shield-check'" [size]="18" />
-              </span>
-            }
-            <div class="modal__titles">
-              <h2 class="modal__title">{{ title() }}</h2>
-              @if (subtitle()) {
-                <p class="modal__subtitle">{{ subtitle() }}</p>
-              }
-            </div>
-            <button
-              type="button"
-              class="btn btn--ghost btn--icon btn--sm"
-              (click)="close.emit()"
-              aria-label="Fermer"
-            >
-              <app-icon name="x" [size]="16" />
+            <h2 class="modal__title">{{ title() }}</h2>
+            <button type="button" class="modal__close" (click)="close.emit()" aria-label="Fermer">
+              <span class="material-symbols-outlined">close</span>
             </button>
           </header>
 
-          <div class="modal__body scroll-y">
+          <div class="modal__body">
             <ng-content />
           </div>
 
           <footer class="modal__foot">
-            <ng-content select="[modalFooter]" />
+            <ng-content select="[modal-actions]" />
           </footer>
         </div>
       </div>
@@ -76,159 +58,101 @@ import { focusFirst, trapFocus } from '../../util/focus-trap';
       position: fixed;
       inset: 0;
       z-index: var(--z-modal);
-      background: var(--scrim);
-      backdrop-filter: blur(3px);
-      animation: fade-in var(--dur-fast) var(--ease-out);
+      background: rgb(2 15 35 / 42%);
     }
 
     .modal__wrap {
       position: fixed;
       inset: 0;
-      z-index: calc(var(--z-modal) + 1);
+      z-index: var(--z-modal);
       display: grid;
       place-items: center;
-      padding: var(--sp-6);
+      padding: 20px;
       pointer-events: none;
     }
 
     .modal__panel {
       pointer-events: auto;
+      width: min(640px, 100%);
+      max-height: calc(100dvh - 40px);
       display: flex;
       flex-direction: column;
-      width: min(520px, 100%);
-      max-height: min(84vh, 760px);
-      background: var(--bg-overlay);
-      border: 1px solid var(--border-default);
-      border-radius: var(--r-xl);
-      box-shadow: var(--shadow-xl);
+      background: var(--surface);
+      box-shadow: 0 18px 48px rgb(0 0 0 / 22%);
       animation: scale-in var(--dur-base) var(--ease-out);
-      overflow: hidden;
-    }
-
-    .modal__panel[data-size='lg'] {
-      width: min(680px, 100%);
-    }
-    .modal__panel[data-size='xl'] {
-      width: min(860px, 100%);
     }
 
     .modal__head {
       display: flex;
-      align-items: flex-start;
-      gap: var(--sp-3);
-      padding: var(--sp-5) var(--sp-5) var(--sp-4);
-      flex: none;
-    }
-
-    .modal__glyph {
-      display: grid;
-      place-items: center;
-      width: 34px;
-      height: 34px;
-      flex: none;
-      border-radius: var(--r-md);
-      border: 1px solid transparent;
-    }
-
-    .modal__glyph[data-tone='danger'] {
-      background: var(--critical-soft);
-      border-color: var(--critical-border);
-      color: var(--critical-text);
-    }
-
-    .modal__glyph[data-tone='success'] {
-      background: var(--success-soft);
-      border-color: var(--success-border);
-      color: var(--success-text);
-    }
-
-    .modal__glyph[data-tone='info'] {
-      background: var(--info-soft);
-      border-color: var(--info-border);
-      color: var(--info-text);
-    }
-
-    .modal__titles {
-      flex: 1;
-      min-width: 0;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      padding: 0 18px;
+      background: var(--surface-2);
     }
 
     .modal__title {
-      font-size: var(--fs-md);
-      font-weight: var(--fw-semibold);
-      color: var(--text-primary);
-      line-height: var(--lh-snug);
+      flex: 1;
+      color: var(--navy);
+      font-size: 15px;
+      font-weight: 500;
     }
 
-    .modal__subtitle {
-      margin-top: 3px;
-      font-size: var(--fs-sm);
-      color: var(--text-tertiary);
-      line-height: var(--lh-snug);
+    .modal__close {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .modal__close:hover {
+      background: var(--blue-50);
     }
 
     .modal__body {
       flex: 1;
       min-height: 0;
-      padding: 0 var(--sp-5) var(--sp-5);
+      padding: 18px;
+      overflow-y: auto;
+      background: var(--surface);
     }
 
     .modal__foot {
       display: flex;
-      align-items: center;
       justify-content: flex-end;
-      gap: var(--sp-2);
-      padding: var(--sp-4) var(--sp-5);
-      border-top: 1px solid var(--border-subtle);
-      background: var(--bg-sunken);
-      flex: none;
-    }
-
-    .modal__foot:empty {
-      display: none;
+      gap: 10px;
+      padding: 0 18px 18px;
+      background: var(--surface);
     }
   `,
 })
 export class ModalComponent {
-  readonly open = input.required<boolean>();
-  readonly title = input.required<string>();
-  readonly subtitle = input<string>('');
-  readonly tone = input<'neutral' | 'danger' | 'success' | 'info'>('neutral');
-  readonly size = input<'default' | 'lg' | 'xl'>('default');
-  readonly dismissOnBackdrop = input(true);
+  readonly open = input(false);
+  readonly title = input('');
   readonly close = output<void>();
 
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
-  private readonly host = inject(ElementRef);
+  private release: (() => void) | null = null;
 
   constructor() {
-    /* Ouverture : focus dans le panneau, tabulation confinée, retour du focus
-       à l'élément déclencheur à la fermeture. */
-    effect((onCleanup) => {
-      if (!this.open()) return;
+    effect(() => {
+      const element = this.panel()?.nativeElement;
 
-      let release: (() => void) | undefined;
+      if (this.open() && element) {
+        this.release = trapFocus(element);
+        focusFirst(element);
+        document.body.style.overflow = 'hidden';
+        return;
+      }
 
-      queueMicrotask(() => {
-        const panel = this.panel()?.nativeElement;
-        if (!panel) return;
-        release = trapFocus(panel);
-        focusFirst(panel);
-      });
-
-      const onEscape = (event: KeyboardEvent) => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        this.close.emit();
-      };
-
-      const element = this.host.nativeElement as HTMLElement;
-      element.addEventListener('keydown', onEscape);
-
-      onCleanup(() => {
-        element.removeEventListener('keydown', onEscape);
-        release?.();
-      });
+      this.release?.();
+      this.release = null;
+      document.body.style.overflow = '';
     });
   }
 }

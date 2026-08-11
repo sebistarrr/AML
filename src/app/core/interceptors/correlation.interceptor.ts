@@ -6,9 +6,9 @@ import { AuthService } from '../auth/auth.service';
 /**
  * Enrichit chaque requête sortante des en-têtes attendus par la passerelle du
  * groupe : identifiant de corrélation pour le suivi de bout en bout, et
- * périmètre de filiale.
+ * groupe d'habilitation de l'utilisateur.
  *
- * Le périmètre transmis ici est indicatif. Le backend ne doit jamais s'y fier
+ * Le groupe transmis ici est indicatif. Le backend ne doit jamais s'y fier
  * pour déterminer ce que l'utilisateur a le droit de consulter : il le déduit
  * du jeton d'authentification.
  */
@@ -19,7 +19,7 @@ export const correlationInterceptor: HttpInterceptorFn = (request, next) => {
     request.clone({
       setHeaders: {
         'X-Correlation-Id': crypto.randomUUID(),
-        'X-Subsidiary-Context': auth.activeSubsidiaryId(),
+        'X-User-Group': auth.currentUser().group,
         'Accept-Language': 'fr-FR',
       },
     }),

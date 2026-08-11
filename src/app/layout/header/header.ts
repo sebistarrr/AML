@@ -1,629 +1,455 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { AlertStore } from '../../core/state/alert-store';
 import { ThemeService } from '../../core/services/theme.service';
-import { USER_LEVEL_META } from '../../core/models';
-import { AvatarComponent } from '../../shared/ui/avatar/avatar';
-import { IconComponent } from '../../shared/ui/icon/icon';
-import { LevelBadgeComponent } from '../../shared/ui/badges/badges';
-import { AgePipe } from '../../shared/pipes/format.pipes';
-import { LayoutService } from '../layout.service';
 
-type OpenMenu = 'subsidiary' | 'notifications' | 'user' | null;
+interface Tab {
+  readonly path: string;
+  readonly label: string;
+}
 
+/**
+ * Bandeau de référence : logo du groupe, titre de l'application, compte,
+ * langue, puis les quatre onglets de navigation. La structure et les
+ * dimensions reprennent celles des maquettes.
+ */
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, IconComponent, AvatarComponent, LevelBadgeComponent, AgePipe],
+  imports: [RouterLink, RouterLinkActive],
   template: `
-    <header class="hd">
-      <button
-        type="button"
-        class="btn btn--ghost btn--icon"
-        (click)="layout.toggleNavigation()"
-        [attr.aria-expanded]="layout.compact() ? layout.mobileNavOpen() : null"
-        [attr.aria-label]="
-          layout.compact()
-            ? layout.mobileNavOpen()
-              ? 'Fermer le menu'
-              : 'Ouvrir le menu'
-            : 'Réduire ou déployer le menu'
-        "
-      >
-        <app-icon name="panel-left" [size]="17" />
-      </button>
-
-      <!-- Contexte de filiale -->
-      <div class="hd__menu-anchor">
-        <button
-          type="button"
-          class="hd__context"
-          (click)="toggle('subsidiary')"
-          [attr.aria-expanded]="open() === 'subsidiary'"
-        >
-          <span class="hd__context-mark"><app-icon name="building" [size]="14" /></span>
-          <span class="hd__context-body">
-            <span class="hd__context-label">{{ subsidiary().code }}</span>
-            <span class="hd__context-name truncate">{{ subsidiary().name }}</span>
-          </span>
-          <app-icon name="chevron-down" [size]="14" />
-        </button>
-
-        @if (open() === 'subsidiary') {
-          <div class="menu menu--wide anim-scale-in">
-            <p class="menu__title">Périmètre de travail</p>
-            @for (item of subsidiaries(); track item.id) {
-              <button
-                type="button"
-                class="menu__item"
-                [class.is-active]="item.id === subsidiary().id"
-                (click)="selectSubsidiary(item.id)"
-              >
-                <span class="menu__item-main">
-                  <span class="menu__item-label">{{ item.name }}</span>
-                  <span class="menu__item-meta">{{ item.code }} · {{ item.country }} · {{ item.regulator }}</span>
-                </span>
-                @if (item.id === subsidiary().id) {
-                  <app-icon name="check" [size]="15" />
-                }
-              </button>
-            }
-            @if (subsidiaries().length === 1) {
-              <p class="menu__foot">
-                Votre habilitation est limitée à cette filiale. Le changement de périmètre relève de
-                l'administration groupe.
-              </p>
-            }
-          </div>
-        }
+    <header class="reference-header">
+      <div class="reference-logo">
+        <img src="cnp-logo.png" alt="CNP Assurances" width="168" height="87" />
       </div>
 
-      <!-- Recherche globale -->
-      <button type="button" class="hd__search" (click)="layout.openPalette()">
-        <app-icon name="search" [size]="15" />
-        <span class="hd__search-text">Rechercher une alerte, un client, une référence…</span>
-        <span class="hd__search-keys">
-          <span class="kbd">Ctrl</span><span class="kbd">K</span>
-        </span>
-      </button>
+      <div class="reference-shell">
+        <div class="reference-top-row">
+          <div class="reference-title">European Tower of Control</div>
 
-      <div class="hd__actions">
-        <button
-          type="button"
-          class="btn btn--ghost btn--icon"
-          (click)="theme.toggle()"
-          [attr.aria-label]="theme.theme() === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'"
-        >
-          <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" [size]="16" />
-        </button>
+          <div class="reference-account">
+            <button
+              class="reference-user"
+              type="button"
+              [attr.aria-expanded]="accountOpen()"
+              aria-haspopup="menu"
+              (click)="accountOpen.set(!accountOpen())"
+            >
+              <span>{{ auth.accountLabel() }}</span>
+              <span class="reference-user-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="12" cy="12" r="11" fill="#002b7f" />
+                  <circle cx="12" cy="8.2" r="3.2" fill="#fff" />
+                  <path d="M5.8 19.1c.8-3.5 3-5.2 6.2-5.2s5.4 1.7 6.2 5.2" fill="#fff" />
+                </svg>
+              </span>
+              <span class="material-symbols-outlined reference-chevron">expand_more</span>
+            </button>
 
-        <button
-          type="button"
-          class="btn btn--ghost btn--icon"
-          (click)="layout.toggleShortcuts()"
-          aria-label="Raccourcis clavier"
-        >
-          <app-icon name="command" [size]="16" />
-        </button>
-
-        <!-- Notifications -->
-        <div class="hd__menu-anchor">
-          <button
-            type="button"
-            class="btn btn--ghost btn--icon hd__bell"
-            (click)="toggle('notifications')"
-            [attr.aria-expanded]="open() === 'notifications'"
-            aria-label="Notifications"
-          >
-            <app-icon name="bell" [size]="16" />
-            @if (notifications().length > 0) {
-              <span class="hd__bell-dot"></span>
-            }
-          </button>
-
-          @if (open() === 'notifications') {
-            <div class="menu menu--wide anim-scale-in">
-              <p class="menu__title">
-                Notifications
-                <span class="count-pill">{{ notifications().length }}</span>
-              </p>
-
-              @for (item of notifications(); track item.id) {
-                <a class="menu__item" [routerLink]="['/alertes', item.id]" (click)="close()">
-                  <span class="menu__item-main">
-                    <span class="menu__item-label">{{ item.title }}</span>
-                    <span class="menu__item-meta">{{ item.detail }} · {{ item.at | age }}</span>
+            @if (accountOpen()) {
+              <div class="account-menu" role="menu">
+                <p class="account-menu__label">Compte de démonstration</p>
+                @for (user of auth.allUsers; track user.id) {
+                  <button
+                    type="button"
+                    role="menuitemradio"
+                    [attr.aria-checked]="user.id === auth.currentUser().id"
+                    class="account-menu__item"
+                    (click)="select(user.id)"
+                  >
+                    <span>{{ user.id }}</span>
+                    <small>{{ user.group === 'LEVEL_1' ? 'Level 1' : 'Level 2' }}</small>
+                  </button>
+                }
+                <button type="button" class="account-menu__item" (click)="theme.toggle()">
+                  <span>{{ theme.isDark() ? 'Thème clair' : 'Thème sombre' }}</span>
+                  <span class="material-symbols-outlined">
+                    {{ theme.isDark() ? 'light_mode' : 'dark_mode' }}
                   </span>
-                  <span class="menu__pip" [attr.data-tone]="item.tone"></span>
-                </a>
-              } @empty {
-                <p class="menu__foot">Aucune notification en attente sur votre périmètre.</p>
-              }
-            </div>
-          }
-        </div>
-
-        <div class="divider--v"></div>
-
-        <!-- Profil -->
-        <div class="hd__menu-anchor">
-          <button
-            type="button"
-            class="hd__user"
-            (click)="toggle('user')"
-            [attr.aria-expanded]="open() === 'user'"
-          >
-            <app-avatar [name]="auth.displayName()" [hue]="auth.currentUser().avatarHue" size="sm" />
-            <span class="hd__user-body">
-              <span class="hd__user-name">{{ auth.displayName() }}</span>
-              <span class="hd__user-role">{{ auth.levelMeta().shortLabel }}</span>
-            </span>
-            <app-icon name="chevron-down" [size]="14" />
-          </button>
-
-          @if (open() === 'user') {
-            <div class="menu menu--wide anim-scale-in">
-              <div class="menu__profile">
-                <app-avatar [name]="auth.displayName()" [hue]="auth.currentUser().avatarHue" size="lg" />
-                <div>
-                  <p class="menu__profile-name">{{ auth.displayName() }}</p>
-                  <p class="menu__profile-mail">{{ auth.currentUser().email }}</p>
-                  <div class="menu__profile-badge">
-                    <app-level-badge [level]="auth.currentUser().level" />
-                  </div>
-                </div>
-              </div>
-
-              <p class="menu__title">Basculer de compte</p>
-              <p class="menu__hint">
-                Prototype : la bascule permet de parcourir l'application sous chaque niveau
-                d'habilitation.
-              </p>
-
-              @for (user of switchableUsers(); track user.id) {
-                <button
-                  type="button"
-                  class="menu__item"
-                  [class.is-active]="user.id === auth.currentUser().id"
-                  (click)="switchUser(user.id)"
-                >
-                  <app-avatar [name]="user.name" [hue]="user.hue" size="xs" />
-                  <span class="menu__item-main">
-                    <span class="menu__item-label">{{ user.name }}</span>
-                    <span class="menu__item-meta">{{ user.role }}</span>
-                  </span>
-                  @if (user.id === auth.currentUser().id) {
-                    <app-icon name="check" [size]="15" />
-                  }
                 </button>
-              }
-            </div>
-          }
+              </div>
+            }
+
+            <button class="reference-language" type="button" aria-label="Langue">
+              <span class="flag-uk" aria-hidden="true">
+                <span class="uk-diagonal uk-d1"></span>
+                <span class="uk-diagonal uk-d2"></span>
+              </span>
+              <span class="material-symbols-outlined reference-chevron">expand_more</span>
+            </button>
+          </div>
         </div>
+
+        <nav class="reference-tabs" aria-label="Navigation principale">
+          @for (tab of tabs; track tab.path) {
+            <a
+              [routerLink]="tab.path"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
+              #link="routerLinkActive"
+              [attr.aria-current]="link.isActive ? 'page' : null"
+              >{{ tab.label }}</a
+            >
+          }
+        </nav>
       </div>
     </header>
   `,
   styles: `
-    :host {
-      display: block;
-    }
-
-    .hd {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
+    .reference-header {
       height: var(--header-h);
-      padding: 0 var(--sp-4);
-      background: color-mix(in srgb, var(--bg-canvas) 82%, transparent);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .hd__menu-anchor {
-      position: relative;
       display: flex;
-    }
-
-    /* --- Sélecteur de filiale --- */
-    .hd__context {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      height: 36px;
-      padding: 0 var(--sp-2) 0 var(--sp-2);
-      border-radius: var(--r-md);
-      border: 1px solid var(--border-subtle);
-      background: var(--bg-surface);
-      color: var(--text-secondary);
-      max-width: 260px;
-      transition:
-        border-color var(--dur-fast) var(--ease-out),
-        background var(--dur-fast) var(--ease-out);
-    }
-
-    .hd__context:hover {
-      border-color: var(--border-default);
-      background: var(--bg-raised);
-    }
-
-    .hd__context-mark {
-      display: grid;
-      place-items: center;
-      width: 22px;
-      height: 22px;
-      flex: none;
-      border-radius: var(--r-sm);
-      background: var(--accent-soft);
-      color: var(--accent-text);
-    }
-
-    .hd__context-body {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      min-width: 0;
-      line-height: 1.25;
-    }
-
-    .hd__context-label {
-      font-size: 10px;
-      font-weight: var(--fw-semibold);
-      letter-spacing: var(--ls-wide);
-      color: var(--text-tertiary);
-    }
-
-    .hd__context-name {
-      font-size: var(--fs-xs);
-      font-weight: var(--fw-medium);
-      color: var(--text-primary);
-      max-width: 170px;
-    }
-
-    /* --- Recherche --- */
-    .hd__search {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      height: 36px;
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 0 var(--sp-2) 0 var(--sp-3);
-      border-radius: var(--r-md);
-      border: 1px solid var(--border-subtle);
-      background: var(--bg-surface);
-      color: var(--text-tertiary);
-      transition:
-        border-color var(--dur-fast) var(--ease-out),
-        background var(--dur-fast) var(--ease-out);
-    }
-
-    .hd__search:hover {
-      border-color: var(--border-default);
-      background: var(--bg-raised);
-    }
-
-    .hd__search-text {
-      flex: 1;
-      text-align: left;
-      font-size: var(--fs-sm);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .hd__search-keys {
-      display: flex;
-      gap: 3px;
-      flex: none;
-    }
-
-    .hd__actions {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-1);
-      flex: none;
-    }
-
-    .hd__bell {
-      position: relative;
-    }
-
-    .hd__bell-dot {
-      position: absolute;
-      top: 7px;
-      right: 8px;
-      width: 6px;
-      height: 6px;
-      border-radius: var(--r-full);
-      background: var(--critical);
-      border: 1.5px solid var(--bg-canvas);
-    }
-
-    /* --- Profil --- */
-    .hd__user {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      height: 36px;
-      padding: 0 var(--sp-2);
-      border-radius: var(--r-md);
-      transition: background var(--dur-fast) var(--ease-out);
-    }
-
-    .hd__user:hover {
-      background: var(--bg-hover);
-    }
-
-    .hd__user-body {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      line-height: 1.25;
-    }
-
-    .hd__user-name {
-      font-size: var(--fs-xs);
-      font-weight: var(--fw-medium);
-      color: var(--text-primary);
-    }
-
-    .hd__user-role {
-      font-size: 10px;
-      color: var(--text-tertiary);
-    }
-
-    /* --- Menus déroulants --- */
-    .menu {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
+      position: sticky;
+      top: 0;
       z-index: var(--z-header);
-      min-width: 240px;
-      padding: var(--sp-2);
-      border-radius: var(--r-lg);
-      border: 1px solid var(--border-default);
-      background: var(--bg-overlay);
-      box-shadow: var(--shadow-lg);
-      transform-origin: top right;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      color: var(--navy);
     }
 
-    .menu--wide {
-      min-width: 320px;
-      max-width: 380px;
+    .reference-logo {
+      width: 168px;
+      min-width: 168px;
+      height: var(--header-h);
+      border-right: 1px solid var(--line);
+      background: #fff;
+      overflow: hidden;
     }
 
-    .hd__menu-anchor:first-of-type .menu {
+    .reference-logo img {
+      display: block;
+      width: 168px;
+      height: 87px;
+      object-fit: cover;
+    }
+
+    .reference-shell {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .reference-top-row {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .reference-title {
+      padding-left: 17px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1;
+      color: #0d3472;
+    }
+
+    :host-context([data-theme='dark']) .reference-title {
+      color: var(--text);
+    }
+
+    .reference-account {
+      position: relative;
+      margin-left: auto;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-right: 12px;
+    }
+
+    .reference-user,
+    .reference-language {
+      height: 27px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      background: var(--surface);
+      color: #12366f;
+      cursor: pointer;
+    }
+
+    :host-context([data-theme='dark']) .reference-user,
+    :host-context([data-theme='dark']) .reference-language {
+      color: var(--text);
+    }
+
+    .reference-user {
+      min-width: 150px;
+      padding-left: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .reference-user-icon {
+      width: 18px;
+      height: 18px;
+      margin-left: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reference-user-icon svg {
+      display: block;
+      width: 18px;
+      height: 18px;
+    }
+
+    .reference-chevron {
+      margin: 0 5px;
+      font-size: 16px;
+      color: currentcolor;
+    }
+
+    .reference-language {
+      min-width: 53px;
+    }
+
+    /* Drapeau britannique dessiné en CSS, comme dans les maquettes. */
+    .flag-uk {
+      position: relative;
+      display: inline-block;
+      width: 20px;
+      height: 13px;
+      overflow: hidden;
+      isolation: isolate;
+      background: #17458f;
+      border: 1px solid var(--line);
+    }
+
+    .flag-uk::before,
+    .flag-uk::after {
+      content: '';
+      position: absolute;
+      z-index: 2;
+    }
+
+    .flag-uk::before {
+      left: 8px;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to right, #fff 0 25%, #d71945 25% 75%, #fff 75%);
+    }
+
+    .flag-uk::after {
       left: 0;
-      right: auto;
-      transform-origin: top left;
+      top: 5px;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(to bottom, #fff 0 20%, #d71945 20% 80%, #fff 80%);
     }
 
-    .menu__title {
+    .uk-diagonal {
+      position: absolute;
+      left: -3px;
+      top: 5px;
+      width: 26px;
+      height: 3px;
+      background: #fff;
+      z-index: 1;
+      transform-origin: center;
+    }
+
+    .uk-d1 {
+      transform: rotate(32deg);
+    }
+
+    .uk-d2 {
+      transform: rotate(-32deg);
+    }
+
+    .uk-diagonal::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 26px;
+      height: 1px;
+      background: #d71945;
+    }
+
+    .reference-tabs {
+      height: 45px;
+      display: flex;
+      align-items: stretch;
+      background: var(--surface);
+    }
+
+    .reference-tabs a {
+      width: 159px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #17396f;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+    }
+
+    :host-context([data-theme='dark']) .reference-tabs a {
+      color: var(--muted);
+    }
+
+    .reference-tabs a.active {
+      color: var(--pink);
+      background: var(--surface-2);
+      border-bottom-color: var(--pink);
+    }
+
+    /* --- Menu de compte --- */
+    .account-menu {
+      position: absolute;
+      top: 34px;
+      right: 74px;
+      z-index: var(--z-header);
+      min-width: 200px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      animation: scale-in var(--dur-fast) var(--ease-out);
+    }
+
+    .account-menu__label {
+      padding: 6px 8px;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .account-menu__item {
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: var(--sp-2);
-      padding: var(--sp-2) var(--sp-2) var(--sp-1);
-      font-size: var(--fs-2xs);
-      font-weight: var(--fw-semibold);
-      letter-spacing: var(--ls-widest);
-      text-transform: uppercase;
-      color: var(--text-tertiary);
+      gap: 12px;
+      min-height: 32px;
+      padding: 0 8px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      font-size: 12px;
+      cursor: pointer;
     }
 
-    .menu__hint {
-      padding: 0 var(--sp-2) var(--sp-2);
-      font-size: var(--fs-2xs);
-      color: var(--text-tertiary);
-      line-height: var(--lh-snug);
+    .account-menu__item:hover {
+      background: var(--blue-50);
     }
 
-    .menu__item {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      width: 100%;
-      padding: var(--sp-2);
-      border-radius: var(--r-sm);
-      text-align: left;
-      color: var(--text-secondary);
-      transition: background var(--dur-fast) var(--ease-out);
+    .account-menu__item[aria-checked='true'] {
+      color: var(--pink);
+      font-weight: 700;
     }
 
-    .menu__item:hover {
-      background: var(--bg-hover);
-    }
-
-    .menu__item.is-active {
-      background: var(--accent-soft);
-      color: var(--accent-text);
-    }
-
-    .menu__item-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .menu__item-label {
-      font-size: var(--fs-sm);
-      font-weight: var(--fw-medium);
-      color: var(--text-primary);
-      line-height: var(--lh-snug);
-    }
-
-    .menu__item.is-active .menu__item-label {
-      color: var(--accent-text);
-    }
-
-    .menu__item-meta {
-      font-size: var(--fs-2xs);
-      color: var(--text-tertiary);
-      line-height: var(--lh-snug);
-    }
-
-    .menu__pip {
-      width: 6px;
-      height: 6px;
-      flex: none;
-      border-radius: var(--r-full);
-      background: var(--neutral);
-    }
-
-    .menu__pip[data-tone='critical'] {
-      background: var(--critical);
-    }
-    .menu__pip[data-tone='warning'] {
-      background: var(--warning);
-    }
-    .menu__pip[data-tone='accent'] {
-      background: var(--accent);
-    }
-
-    .menu__foot {
-      padding: var(--sp-2);
-      font-size: var(--fs-2xs);
-      color: var(--text-tertiary);
-      line-height: var(--lh-snug);
-    }
-
-    .menu__profile {
-      display: flex;
-      gap: var(--sp-3);
-      padding: var(--sp-2);
-      margin-bottom: var(--sp-2);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .menu__profile-name {
-      font-size: var(--fs-sm);
-      font-weight: var(--fw-semibold);
-      color: var(--text-primary);
-    }
-
-    .menu__profile-mail {
-      font-size: var(--fs-2xs);
-      color: var(--text-tertiary);
-      margin-bottom: var(--sp-2);
-    }
-
-    .menu__profile-badge {
-      display: flex;
-    }
-
-    @media (max-width: 1080px) {
-      .hd__search-text {
-        display: none;
-      }
-      .hd__search {
-        flex: none;
-        width: 36px;
-        justify-content: center;
-        padding: 0;
-      }
-      .hd__search-keys {
-        display: none;
-      }
-      .hd__user-body {
-        display: none;
-      }
+    .account-menu__item small {
+      color: var(--muted);
     }
 
     @media (max-width: 720px) {
-      .hd__context-body {
+      .reference-header {
+        height: 64px;
+      }
+
+      .reference-logo,
+      .reference-logo img {
+        width: 110px;
+        min-width: 110px;
+        height: 64px;
+      }
+
+      .reference-logo img {
+        width: 124px;
+        object-fit: cover;
+        object-position: left top;
+      }
+
+      .reference-top-row {
+        height: 32px;
+      }
+
+      .reference-title {
+        padding-left: 10px;
+        font-size: 11px;
+      }
+
+      /* Les quatre onglets ne tiennent plus dans la largeur : ils défilent
+         horizontalement plutôt que d'élargir la page entière. */
+      .reference-tabs {
+        height: 32px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .reference-tabs::-webkit-scrollbar {
         display: none;
+      }
+
+      .reference-tabs a {
+        width: auto;
+        min-width: 92px;
+        flex: 0 0 auto;
+        padding: 0 10px;
+        font-size: 9px;
+      }
+
+      .reference-user {
+        min-width: 36px;
+        width: 36px;
+        padding: 0;
+      }
+
+      .reference-user > span:first-child,
+      .reference-user .reference-chevron {
+        display: none;
+      }
+
+      .reference-user-icon {
+        margin: 0;
+      }
+
+      .reference-account {
+        gap: 6px;
+        padding-right: 6px;
+      }
+
+      .account-menu {
+        right: 6px;
       }
     }
   `,
   host: { '(document:click)': 'onDocumentClick($event)' },
 })
 export class HeaderComponent {
-  protected readonly layout = inject(LayoutService);
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
-  private readonly store = inject(AlertStore);
-  private readonly host = inject(ElementRef<HTMLElement>);
 
-  protected readonly open = signal<OpenMenu>(null);
+  protected readonly accountOpen = signal(false);
 
-  protected readonly subsidiary = this.auth.activeSubsidiary;
-  protected readonly subsidiaries = this.auth.availableSubsidiaries;
+  protected readonly tabs = computed<readonly Tab[]>(() => [
+    { path: '/my-alerts', label: 'My alerts' },
+    { path: '/alert-basket', label: 'Alert Basket' },
+    { path: '/processed-alerts', label: 'Processed alerts' },
+    { path: '/search-person', label: 'Search person' },
+  ])();
 
-  protected readonly switchableUsers = computed(() =>
-    this.auth.allUsers
-      .filter((user) => user.active)
-      .map((user) => ({
-        id: user.id,
-        name: `${user.firstName} ${user.lastName}`,
-        role: `${USER_LEVEL_META[user.level].label} · ${user.jobTitle}`,
-        hue: user.avatarHue,
-      })),
-  );
-
-  /** Les alertes critiques non affectées et les alertes hors délai remontent ici. */
-  protected readonly notifications = computed(() => {
-    const critical = this.store
-      .alerts()
-      .filter((alert) => alert.priority === 'CRITICAL' && alert.status === 'TO_PROCESS')
-      .slice(0, 4)
-      .map((alert) => ({
-        id: alert.id,
-        title: `${alert.reference} — ${alert.client.firstName} ${alert.client.lastName}`,
-        detail: `Alerte critique non affectée · score ${alert.match.score} %`,
-        at: alert.generatedAt,
-        tone: 'critical' as const,
-      }));
-
-    const reopened = this.store
-      .alerts()
-      .filter((alert) => alert.status === 'REOPENED')
-      .slice(0, 2)
-      .map((alert) => ({
-        id: alert.id,
-        title: `${alert.reference} — alerte rouverte`,
-        detail: 'Réexamen requis à la suite d’un élément nouveau',
-        at: alert.lastActionAt,
-        tone: 'warning' as const,
-      }));
-
-    return [...reopened, ...critical];
-  });
-
-  protected toggle(menu: Exclude<OpenMenu, null>): void {
-    this.open.update((current) => (current === menu ? null : menu));
+  protected select(userId: string): void {
+    this.auth.signInAs(userId);
+    this.accountOpen.set(false);
   }
 
-  protected close(): void {
-    this.open.set(null);
-  }
-
-  protected selectSubsidiary(id: string): void {
-    this.auth.selectSubsidiary(id);
-    this.close();
-  }
-
-  protected switchUser(id: string): void {
-    this.auth.signInAs(id);
-    this.close();
-  }
-
-  /** Ferme les menus dès qu'un clic se produit en dehors du header. */
+  /** Un clic hors du bandeau referme le menu de compte. */
   protected onDocumentClick(event: MouseEvent): void {
-    if (this.open() === null) return;
-    const target = event.target as Node;
-    if (!(this.host.nativeElement as HTMLElement).contains(target)) {
-      this.close();
-    }
+    if (!this.accountOpen()) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.reference-account')) return;
+    this.accountOpen.set(false);
   }
 }

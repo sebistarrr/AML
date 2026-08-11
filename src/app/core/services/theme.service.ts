@@ -1,13 +1,12 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, computed, effect, signal } from '@angular/core';
 
 export type Theme = 'dark' | 'light';
 
-const STORAGE_KEY = 'vigilance.theme';
+const STORAGE_KEY = 'etc.theme';
 
 /**
- * Bascule de thème. Le thème sombre est le défaut : les écrans
- * d'investigation sont consultés longuement, souvent en environnement peu
- * éclairé, et le contraste réduit limite la fatigue visuelle.
+ * Bascule de thème. Le thème clair est le défaut : c'est celui des maquettes
+ * de référence et celui du poste de travail des analystes.
  *
  * La valeur initiale est déjà appliquée par un script inline dans index.html,
  * ce qui évite tout flash au chargement.
@@ -16,6 +15,7 @@ const STORAGE_KEY = 'vigilance.theme';
 export class ThemeService {
   private readonly _theme = signal<Theme>(this.restore());
   readonly theme = this._theme.asReadonly();
+  readonly isDark = computed(() => this._theme() === 'dark');
 
   constructor() {
     effect(() => {
@@ -42,8 +42,8 @@ export class ThemeService {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === 'light' || stored === 'dark') return stored;
     } catch {
-      /* Ignoré : on retombe sur le thème sombre. */
+      /* Ignoré : on retombe sur le thème clair. */
     }
-    return 'dark';
+    return 'light';
   }
 }

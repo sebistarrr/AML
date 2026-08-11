@@ -1,250 +1,299 @@
 /**
- * Référentiel métier LCB-FT.
+ * Référentiel métier — European Tower of Control.
  *
- * Tous les libellés, variantes de badge et ordres de tri des énumérations sont
+ * Tous les libellés, codes et variantes de couleur des énumérations sont
  * centralisés ici : c'est la seule source de vérité pour l'affichage d'un
- * statut, d'un type de screening, d'une priorité ou d'une décision. Aucun
- * composant ne doit redéfinir un libellé localement.
+ * statut, d'une typologie d'alerte, d'une décision ou d'un niveau de risque.
+ * Aucun composant ne redéfinit un libellé localement.
+ *
+ * Les valeurs reprennent à l'identique celles des maquettes de référence
+ * (dossier `mockup-test`) : codes de statut en capitales, typologies
+ * d'alerte limitées aux quatre dispositifs de screening du groupe.
  */
 
 /* -----------------------------------------------------------------------------
-   Dispositif de screening à l'origine de l'alerte
+   Typologie d'alerte — les quatre seuls dispositifs de screening
    -------------------------------------------------------------------------- */
-export type ScreeningType = 'SANCTION' | 'PEP' | 'RCA';
 
-export const SCREENING_TYPES: readonly ScreeningType[] = ['SANCTION', 'PEP', 'RCA'] as const;
+export type AlertTypology = 'SANCTION' | 'PEP' | 'RCA' | 'HRTC';
 
-export interface ScreeningTypeMeta {
+export const ALERT_TYPOLOGIES: readonly AlertTypology[] = [
+  'SANCTION',
+  'PEP',
+  'RCA',
+  'HRTC',
+] as const;
+
+export interface AlertTypologyMeta {
+  /** Libellé affiché dans les corbeilles et l'onglet de traitement. */
   readonly label: string;
-  /** Libellé long, utilisé en tooltip et sur les écrans d'investigation. */
-  readonly fullLabel: string;
+  /** Libellé français, utilisé par les écrans de profil de risque. */
+  readonly labelFr: string;
   readonly description: string;
-  readonly variant: string;
-  /** Nom du token CSS de couleur, pour les graphiques. */
-  readonly colorVar: string;
+  /** Icône Material Symbols associée au dispositif. */
+  readonly icon: string;
 }
 
-export const SCREENING_TYPE_META: Record<ScreeningType, ScreeningTypeMeta> = {
+export const ALERT_TYPOLOGY_META: Record<AlertTypology, AlertTypologyMeta> = {
   SANCTION: {
-    label: 'Sanction',
-    fullLabel: 'Liste de sanctions',
+    label: 'Asset Freeze',
+    labelFr: 'Gel des avoirs',
     description:
-      "Correspondance avec une personne ou une entité figurant sur une liste de sanctions internationales (UE, OFAC, ONU, HM Treasury).",
-    variant: 'sanction',
-    colorVar: '--sanction',
+      'Correspondance avec une personne ou une entité figurant sur une liste de sanctions internationales (UE, OFAC, ONU, HM Treasury).',
+    icon: 'ac_unit',
   },
   PEP: {
-    label: 'PEP',
-    fullLabel: 'Personne politiquement exposée',
+    label: 'Politically Exposed Person',
+    labelFr: 'Personne politiquement exposée',
     description:
-      "Correspondance avec une personne exerçant ou ayant exercé une fonction publique importante, soumise à une vigilance renforcée.",
-    variant: 'pep',
-    colorVar: '--pep',
+      'Correspondance avec une personne exerçant ou ayant exercé une fonction publique importante, soumise à une vigilance renforcée.',
+    icon: 'workspace_premium',
   },
   RCA: {
-    label: 'RCA',
-    fullLabel: 'Proche ou associé d’une personne listée',
+    label: 'Relatives and Close Associates',
+    labelFr: "Proche ou associé d'une personne listée",
     description:
       "Correspondance avec un membre de la famille ou un associé proche d'une personne politiquement exposée ou sanctionnée.",
-    variant: 'rca',
-    colorVar: '--rca',
+    icon: 'verified_user',
+  },
+  HRTC: {
+    label: 'High Risk Third Country',
+    labelFr: 'Pays tiers à haut risque',
+    description:
+      'Rattachement du client à un pays tiers présentant des carences stratégiques dans son dispositif de lutte contre le blanchiment.',
+    icon: 'public',
   },
 };
 
 /* -----------------------------------------------------------------------------
    Statut de l'alerte dans le workflow
    -------------------------------------------------------------------------- */
-export type AlertStatus =
-  | 'TO_PROCESS'
-  | 'ASSIGNED'
-  | 'IN_PROGRESS'
-  | 'ESCALATED'
-  | 'PROCESSED'
-  | 'REOPENED';
 
-export const ALERT_STATUSES: readonly AlertStatus[] = [
-  'TO_PROCESS',
-  'ASSIGNED',
-  'IN_PROGRESS',
-  'ESCALATED',
-  'PROCESSED',
-  'REOPENED',
+export type AlertStatus =
+  | 'TO_CLEAR_L1'
+  | 'IN_PROCESS_L1'
+  | 'ESCALATED_L2'
+  | 'IN_PROCESS_L2'
+  | 'CLEARED_L1'
+  | 'CLEARED_L2'
+  | 'ENFORCED_SCRUTINY'
+  | 'BLACKLISTED';
+
+/** Statuts d'une alerte encore ouverte — ordre du filtre « Status ». */
+export const OPEN_ALERT_STATUSES: readonly AlertStatus[] = [
+  'TO_CLEAR_L1',
+  'IN_PROCESS_L1',
+  'ESCALATED_L2',
+  'IN_PROCESS_L2',
 ] as const;
 
+/** Statuts terminaux, présents dans la corbeille « Processed alerts ». */
+export const CLOSED_ALERT_STATUSES: readonly AlertStatus[] = [
+  'CLEARED_L1',
+  'CLEARED_L2',
+  'ENFORCED_SCRUTINY',
+  'BLACKLISTED',
+] as const;
+
+export const ALERT_STATUSES: readonly AlertStatus[] = [
+  ...OPEN_ALERT_STATUSES,
+  ...CLOSED_ALERT_STATUSES,
+] as const;
+
+/** Palette de pastilles partagée par les statuts, décisions et niveaux de risque. */
+export type Tone = 'neutral' | 'info' | 'warning' | 'critical' | 'success' | 'black';
 
 export interface AlertStatusMeta {
-  readonly label: string;
   readonly description: string;
-  readonly variant: string;
-  readonly colorVar: string;
+  readonly tone: Tone;
+  /** Niveau d'habilitation en charge de l'alerte à ce stade. */
+  readonly level: 1 | 2 | null;
 }
 
 export const ALERT_STATUS_META: Record<AlertStatus, AlertStatusMeta> = {
-  TO_PROCESS: {
-    label: 'À traiter',
-    description: "Alerte générée par le moteur de screening, en attente de prise en charge.",
-    variant: 'info',
-    colorVar: '--info',
+  TO_CLEAR_L1: {
+    description: 'Alerte générée par le moteur de screening, en attente de prise en charge.',
+    tone: 'info',
+    level: 1,
   },
-  ASSIGNED: {
-    label: 'Affectée',
-    description: 'Alerte attribuée à un analyste mais non encore ouverte.',
-    variant: 'accent',
-    colorVar: '--accent',
+  IN_PROCESS_L1: {
+    description: 'Analyse en cours par un analyste de niveau 1.',
+    tone: 'warning',
+    level: 1,
   },
-  IN_PROGRESS: {
-    label: 'En cours',
-    description: "Analyse en cours par l'analyste affecté.",
-    variant: 'warning',
-    colorVar: '--warning',
-  },
-  ESCALATED: {
-    label: 'Escaladée',
+  ESCALATED_L2: {
     description: 'Transmise au niveau 2 pour décision réglementaire.',
-    variant: 'critical',
-    colorVar: '--critical',
+    tone: 'critical',
+    level: 2,
   },
-  PROCESSED: {
-    label: 'Traitée',
-    description: 'Décision prise et enregistrée dans le registre d’audit.',
-    variant: 'success',
-    colorVar: '--success',
+  IN_PROCESS_L2: {
+    description: 'Analyse en cours par un analyste de niveau 2.',
+    tone: 'warning',
+    level: 2,
   },
-  REOPENED: {
-    label: 'Rouverte',
-    description: "Alerte précédemment traitée, rouverte à la suite d'un élément nouveau.",
-    variant: 'sanction',
-    colorVar: '--sanction',
+  CLEARED_L1: {
+    description: 'Alerte écartée au niveau 1 : aucun risque retenu.',
+    tone: 'success',
+    level: 1,
+  },
+  CLEARED_L2: {
+    description: 'Alerte écartée au niveau 2 : aucun risque retenu.',
+    tone: 'success',
+    level: 2,
+  },
+  ENFORCED_SCRUTINY: {
+    description: 'Client placé sous vigilance renforcée à la suite de la décision.',
+    tone: 'critical',
+    level: 2,
+  },
+  BLACKLISTED: {
+    description: 'Correspondance avérée : le client est inscrit sous mesure de gel.',
+    tone: 'black',
+    level: 2,
   },
 };
 
-/* -----------------------------------------------------------------------------
-   Priorité — dérivée du score de rapprochement et du type de dispositif
-   -------------------------------------------------------------------------- */
-export type Priority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-
-export const PRIORITIES: readonly Priority[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const;
-
-export interface PriorityMeta {
-  readonly label: string;
-  readonly variant: string;
-  readonly colorVar: string;
-  /** Poids de tri : plus la valeur est élevée, plus l'alerte remonte. */
-  readonly weight: number;
-  /** Délai de traitement attendu, en heures. */
-  readonly slaHours: number;
+export function isClosedStatus(status: AlertStatus): boolean {
+  return CLOSED_ALERT_STATUSES.includes(status);
 }
 
-export const PRIORITY_META: Record<Priority, PriorityMeta> = {
-  CRITICAL: { label: 'Critique', variant: 'critical', colorVar: '--critical', weight: 4, slaHours: 4 },
-  HIGH: { label: 'Élevée', variant: 'warning', colorVar: '--warning', weight: 3, slaHours: 24 },
-  MEDIUM: { label: 'Moyenne', variant: 'info', colorVar: '--info', weight: 2, slaHours: 72 },
-  LOW: { label: 'Faible', variant: 'neutral', colorVar: '--neutral', weight: 1, slaHours: 168 },
-};
-
 /* -----------------------------------------------------------------------------
-   Décisions de clôture
+   Décisions de clôture — libellés repris de l'écran de traitement
    -------------------------------------------------------------------------- */
-export type Decision = 'HOMONYM' | 'NEUTRALIZED' | 'CONFIRMED';
 
-export const DECISIONS: readonly Decision[] = ['HOMONYM', 'NEUTRALIZED', 'CONFIRMED'] as const;
+export type Decision =
+  'CLEARED_L1' | 'ESCALATED_L2' | 'CLEARED_L2' | 'ENFORCED_SCRUTINY' | 'BLACKLISTED';
 
 export interface DecisionMeta {
+  /** Libellé du bouton radio, identique à la maquette de traitement. */
   readonly label: string;
-  /** Formulation à l'impératif, utilisée sur les boutons d'action. */
-  readonly actionLabel: string;
-  readonly description: string;
-  /** Ce que la décision déclenche concrètement — affiché avant validation. */
-  readonly consequence: string;
-  readonly variant: string;
-  readonly colorVar: string;
-  /** Niveau habilité à prononcer cette décision. */
+  /** Libellé français, utilisé par le tableau d'alertes du profil de risque. */
+  readonly labelFr: string;
+  readonly tone: Tone;
+  /** Niveau habilité à prononcer la décision. */
   readonly requiredLevel: 1 | 2;
+  /**
+   * Vrai lorsque la décision est proposée dans le panneau de traitement.
+   * La vigilance renforcée découle d'une revue périodique du profil client,
+   * pas de la clôture d'une alerte : elle n'y figure donc pas.
+   */
+  readonly offeredInPanel: boolean;
+  /** Statut porté par l'alerte une fois la décision enregistrée. */
+  readonly resultingStatus: AlertStatus;
+  /** Ce que la décision déclenche concrètement. */
+  readonly consequence: string;
 }
 
 export const DECISION_META: Record<Decision, DecisionMeta> = {
-  HOMONYM: {
-    label: 'Homonyme',
-    actionLabel: 'Homonyme — aucun risque',
-    description:
-      "Les éléments d'identification disponibles permettent d'écarter la correspondance avec la personne listée.",
-    consequence:
-      "L'alerte est clôturée sans suite. Aucune mesure de vigilance renforcée n'est déclenchée sur le client.",
-    variant: 'success',
-    colorVar: '--success',
+  CLEARED_L1: {
+    label: 'Cleared alert - No Risk - Level 1',
+    labelFr: 'Écartée',
+    tone: 'success',
     requiredLevel: 1,
+    offeredInPanel: true,
+    resultingStatus: 'CLEARED_L1',
+    consequence:
+      "L'alerte est clôturée sans suite. Aucune mesure de vigilance renforcée n'est déclenchée sur la personne.",
   },
-  NEUTRALIZED: {
-    label: 'Neutralisée',
-    actionLabel: "Neutraliser l'alerte",
-    description:
-      "Après analyse approfondie, la correspondance n'est pas avérée. L'alerte ne constitue pas un rapprochement valide.",
+  ESCALATED_L2: {
+    label: 'Escalate to Level 2',
+    labelFr: 'Escaladée',
+    tone: 'critical',
+    requiredLevel: 1,
+    offeredInPanel: true,
+    resultingStatus: 'ESCALATED_L2',
+    consequence: "L'alerte est transmise au niveau 2 pour décision réglementaire.",
+  },
+  CLEARED_L2: {
+    label: 'Cleared alert - No Risk - Level 2',
+    labelFr: 'Validée',
+    tone: 'success',
+    requiredLevel: 2,
+    offeredInPanel: true,
+    resultingStatus: 'CLEARED_L2',
     consequence:
       "L'alerte est clôturée après analyse de niveau 2. Le rapprochement est mémorisé afin de limiter la régénération d'alertes identiques.",
-    variant: 'success',
-    colorVar: '--success',
-    requiredLevel: 2,
   },
-  CONFIRMED: {
-    label: 'Avérée',
-    actionLabel: "Avérer l'alerte",
-    description:
-      'La correspondance est confirmée. Le client correspond bien à la personne listée par le dispositif de screening.',
+  ENFORCED_SCRUTINY: {
+    label: 'Enforced scrutiny',
+    labelFr: 'Vigilance renforcée',
+    tone: 'critical',
+    requiredLevel: 2,
+    offeredInPanel: false,
+    resultingStatus: 'ENFORCED_SCRUTINY',
     consequence:
-      "Le client est classé en vigilance renforcée, la relation d'affaires est gelée dans l'attente d'un arbitrage conformité, et un dossier de déclaration de soupçon est ouvert.",
-    variant: 'critical',
-    colorVar: '--critical',
+      'La personne est placée sous vigilance renforcée : ses opérations font l’objet d’un suivi rapproché.',
+  },
+  BLACKLISTED: {
+    label: 'Blacklisted - Under Sanctions',
+    labelFr: 'Blacklistée',
+    tone: 'black',
     requiredLevel: 2,
+    offeredInPanel: true,
+    resultingStatus: 'BLACKLISTED',
+    consequence:
+      "La personne est inscrite sous mesure de gel des avoirs, la relation d'affaires est bloquée et un dossier de déclaration de soupçon est ouvert.",
   },
 };
 
-/* -----------------------------------------------------------------------------
-   Résultat de comparaison attribut par attribut
-   -------------------------------------------------------------------------- */
-export type ComparisonResult = 'MATCH' | 'PARTIAL' | 'DIVERGENCE' | 'MISSING' | 'UNCERTAIN';
+/** Décisions proposées dans le panneau, au niveau d'habilitation indiqué. */
+export function decisionsForLevel(level: 1 | 2): readonly Decision[] {
+  return (Object.keys(DECISION_META) as Decision[]).filter(
+    (decision) =>
+      DECISION_META[decision].requiredLevel === level && DECISION_META[decision].offeredInPanel,
+  );
+}
 
-export interface ComparisonResultMeta {
+/** Longueur maximale de la justification, imposée par le formulaire de décision. */
+export const JUSTIFICATION_MAX_LENGTH = 1000;
+
+/* -----------------------------------------------------------------------------
+   Type de personne
+   -------------------------------------------------------------------------- */
+
+export type PersonType = 'NATURAL' | 'LEGAL';
+
+export interface PersonTypeMeta {
   readonly label: string;
-  readonly variant: string;
-  readonly colorVar: string;
-  readonly icon: 'check' | 'approx' | 'cross' | 'minus' | 'question';
+  readonly labelFr: string;
+  readonly icon: string;
 }
 
-export const COMPARISON_RESULT_META: Record<ComparisonResult, ComparisonResultMeta> = {
-  MATCH: { label: 'Correspondance', variant: 'success', colorVar: '--success', icon: 'check' },
-  PARTIAL: { label: 'Partielle', variant: 'warning', colorVar: '--warning', icon: 'approx' },
-  DIVERGENCE: { label: 'Divergence', variant: 'critical', colorVar: '--critical', icon: 'cross' },
-  MISSING: { label: 'Non renseigné', variant: 'neutral', colorVar: '--neutral', icon: 'minus' },
-  UNCERTAIN: { label: 'Incertain', variant: 'info', colorVar: '--info', icon: 'question' },
+export const PERSON_TYPE_META: Record<PersonType, PersonTypeMeta> = {
+  NATURAL: { label: 'Natural Person', labelFr: 'Personne physique', icon: 'person' },
+  LEGAL: { label: 'Legal Entity', labelFr: 'Personne morale', icon: 'apartment' },
 };
 
 /* -----------------------------------------------------------------------------
-   Seuils de score de rapprochement
+   Niveau de risque d'un composant du profil client
    -------------------------------------------------------------------------- */
-export type ScoreBand = 'VERY_HIGH' | 'HIGH' | 'MODERATE' | 'LOW';
 
-export function scoreBand(score: number): ScoreBand {
-  if (score >= 90) return 'VERY_HIGH';
-  if (score >= 75) return 'HIGH';
-  if (score >= 55) return 'MODERATE';
-  return 'LOW';
+export type RiskLevel =
+  'Sans risque' | 'Données incomplètes' | 'Alerte en cours' | 'Vigilance renforcée' | 'Blacklisté';
+
+export interface RiskLevelMeta {
+  /** Poids de sévérité : le risque global est le composant le plus élevé. */
+  readonly severity: number;
+  /** Classe de couleur de la maquette de profil de risque. */
+  readonly variant: 'risk-green' | 'risk-grey' | 'risk-orange' | 'risk-red' | 'risk-black';
 }
 
-export const SCORE_BAND_META: Record<ScoreBand, { label: string; variant: string; colorVar: string }> = {
-  VERY_HIGH: { label: 'Très élevé', variant: 'critical', colorVar: '--critical' },
-  HIGH: { label: 'Élevé', variant: 'warning', colorVar: '--warning' },
-  MODERATE: { label: 'Modéré', variant: 'info', colorVar: '--info' },
-  LOW: { label: 'Faible', variant: 'neutral', colorVar: '--neutral' },
+export const RISK_LEVEL_META: Record<RiskLevel, RiskLevelMeta> = {
+  'Sans risque': { severity: 1, variant: 'risk-green' },
+  'Données incomplètes': { severity: 2, variant: 'risk-grey' },
+  'Alerte en cours': { severity: 3, variant: 'risk-orange' },
+  'Vigilance renforcée': { severity: 4, variant: 'risk-red' },
+  Blacklisté: { severity: 5, variant: 'risk-black' },
 };
 
-/** Priorité déduite du score et du dispositif — la même règle que le moteur. */
-export function derivePriority(score: number, type: ScreeningType): Priority {
-  if (type === 'SANCTION') {
-    if (score >= 88) return 'CRITICAL';
-    if (score >= 72) return 'HIGH';
-    return score >= 55 ? 'MEDIUM' : 'LOW';
-  }
-  if (score >= 92) return 'CRITICAL';
-  if (score >= 78) return 'HIGH';
-  return score >= 58 ? 'MEDIUM' : 'LOW';
-}
+/* -----------------------------------------------------------------------------
+   Circuit d'alimentation du moteur de screening
+   -------------------------------------------------------------------------- */
+
+export type Circuit = 'Temps réel' | 'Batch';
+
+/* -----------------------------------------------------------------------------
+   Source d'une ligne de rapprochement
+   -------------------------------------------------------------------------- */
+
+export type ReconciliationSource = 'PERSON' | 'FACTIVA';
