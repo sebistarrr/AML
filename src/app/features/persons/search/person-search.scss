@@ -1,5 +1,12 @@
 /* Recherche de personne — gabarit repris de RECHERCHE_PERSONNE.html. */
 
+/* Écran routé : le routeur l'insère hors de la portée des styles de la
+   coquille, il porte donc lui-même sa mise en page et sa transition. */
+:host {
+  display: block;
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+
 .workspace {
   max-width: var(--content-max);
   margin: 0 auto;
@@ -179,8 +186,8 @@
 }
 
 .action.primary {
-  border: 1px solid var(--navy-solid);
-  background: var(--navy-solid);
+  border: 1px solid var(--navy);
+  background: var(--navy);
   color: #fff;
   box-shadow: 0 4px 10px rgb(0 43 127 / 14%);
 }
@@ -306,7 +313,7 @@ td {
 }
 
 .open-profile:hover {
-  background: var(--navy-solid);
+  background: var(--navy);
   color: #fff;
 }
 

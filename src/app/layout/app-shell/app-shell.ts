@@ -41,7 +41,7 @@ import { ToastHostComponent } from '../../shared/ui/overlay/toast-host';
       z-index: calc(var(--z-toast) + 1);
       padding: 8px 16px;
       border-radius: 6px;
-      background: var(--navy-solid);
+      background: var(--navy);
       color: #fff;
       font-size: 13px;
       font-weight: 600;
@@ -55,17 +55,15 @@ import { ToastHostComponent } from '../../shared/ui/overlay/toast-host';
       transform: translateY(0);
     }
 
+    /* Le composant routé est inséré ici par le routeur : il ne porte pas
+       l'attribut d'encapsulation de cette coquille, et aucune règle écrite ici
+       ne peut l'atteindre. Chacun déclare donc son propre bloc :host — c'est
+       ce qui lui donne display: block, sans quoi il resterait en ligne et
+       s'élargirait au-delà de la fenêtre au lieu de la remplir. */
     .shell__content {
       flex: 1;
       min-width: 0;
       background: var(--bg);
-    }
-
-    /* Le composant routé étant recréé à chaque navigation, l'animation se
-       rejoue sans machinerie supplémentaire. */
-    .shell__content > * {
-      display: block;
-      animation: fade-in var(--dur-base) var(--ease-out);
     }
   `,
 })

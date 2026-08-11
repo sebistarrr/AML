@@ -1,9 +1,9 @@
 /* =============================================================================
-   DESIGN TOKENS — European Tower of Control
+   DESIGN TOKENS — AML PROJECT
    -----------------------------------------------------------------------------
-   Les noms et les valeurs reprennent ceux des maquettes de référence
+   Les noms et les valeurs sont ceux des maquettes de référence
    (`mockup-test`) : tout extrait de style repris d'une maquette fonctionne ici
-   sans traduction. Thème clair par défaut, thème sombre par bascule.
+   sans traduction. L'application n'a qu'un thème, celui des maquettes.
    ========================================================================== */
 
 :root {
@@ -16,11 +16,6 @@
   /* --- Couleurs de marque ------------------------------------------------ */
   --navy: #002b7f;
   --navy-2: #001f5c;
-  /* Fond des actions principales : il porte du texte blanc et doit donc rester
-     sombre dans les deux thèmes, là où `--navy` s'éclaircit pour rester
-     lisible sur fond sombre. */
-  --navy-solid: #002b7f;
-  --navy-solid-hover: #001f5c;
   --blue-50: #eef4fc;
   --blue-100: #dce8f8;
   --pink: #d31265;
@@ -63,38 +58,4 @@
   --z-drawer: 60;
   --z-modal: 80;
   --z-toast: 100;
-}
-
-html[data-theme='dark'] {
-  color-scheme: dark;
-
-  --bg: #0d1522;
-  --surface: #121d2d;
-  --surface-2: #172438;
-  --text: #ecf2fb;
-  --muted: #a9b7ca;
-  --line: #2b3a50;
-  --blue-50: #172a47;
-  --blue-100: #213b61;
-  --shadow: 0 8px 28px rgb(0 0 0 / 30%);
-
-  /* Les couleurs de marque et de statut s'éclaircissent : un bleu marine ou un
-     noir posés sur un fond sombre ne se lisent plus. Les fonds de pastille
-     s'assombrissent en miroir, pour conserver le même contraste qu'en clair. */
-  --navy: #9fbdf5;
-  --navy-2: #c2d5fb;
-  --navy-solid: #2f5fc4;
-  --navy-solid-hover: #3d6fd6;
-  --pink: #ff5c9d;
-
-  --green: #4ec27f;
-  --green-bg: #153925;
-  --orange: #e8a13c;
-  --orange-bg: #412b12;
-  --red: #f2707f;
-  --red-bg: #451d24;
-  --black: #c9ccd2;
-  --black-bg: #090b0e;
-  --grey: #9aa4b4;
-  --grey-bg: #293241;
 }

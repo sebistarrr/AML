@@ -1,5 +1,5 @@
 /**
- * Référentiel métier — European Tower of Control.
+ * Référentiel métier — AML PROJECT.
  *
  * Tous les libellés, codes et variantes de couleur des énumérations sont
  * centralisés ici : c'est la seule source de vérité pour l'affichage d'un

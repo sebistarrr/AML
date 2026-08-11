@@ -1,4 +1,4 @@
-# European Tower of Control
+# AML PROJECT
 
 Prototype fonctionnel de la plateforme de traitement des alertes de screening
 LCB-FT (lutte contre le blanchiment de capitaux et le financement du
@@ -50,7 +50,8 @@ s'affiche normalement.
 - **Angular 21** — composants standalone, Signals, `computed()`, `effect()`
 - **Détection de changement sans Zone.js** (`provideZonelessChangeDetection`)
 - **Lazy loading** par fonctionnalité, liaison des paramètres de route aux `input()`
-- **SCSS** avec un système de jetons de conception repris des maquettes
+- **SCSS** avec un système de jetons de conception repris des maquettes — un
+  seul thème, celui des maquettes
 - **Aucune dépendance d'affichage externe** — polices Inter et Material Symbols
   embarquées dans le bundle, aucune requête vers un tiers
 
@@ -161,5 +162,5 @@ sous chaque niveau d'habilitation. L'utilisateur par défaut est `STRAN`
 
 Il s'agit d'un prototype d'interface : les données sont simulées côté client et
 persistées en mémoire pour la durée de la session. Aucun appel réseau réel
-n'est effectué, aucune donnée n'est conservée après rechargement, hormis les
-préférences de thème et de compte.
+n'est effectué, aucune donnée n'est conservée après rechargement, hormis le
+compte sélectionné.

@@ -32,14 +32,14 @@
 }
 
 .btn--primary {
-  background: var(--navy-solid);
-  border-color: var(--navy-solid);
+  background: var(--navy);
+  border-color: var(--navy);
   color: #fff;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--navy-solid-hover);
-  border-color: var(--navy-solid-hover);
+  background: var(--navy-2);
+  border-color: var(--navy-2);
 }
 
 .btn--quiet {

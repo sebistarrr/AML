@@ -1,32 +1,19 @@
 <!doctype html>
-<html lang="fr" data-theme="light">
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>European Tower of Control</title>
+    <title>AML PROJECT</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
       content="Plateforme de traitement des alertes de screening LCB-FT : sanctions, PEP, RCA et pays tiers à haut risque."
     />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="light" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
 
     <!-- Les polices Inter et Material Symbols sont embarquées dans la feuille
          de styles de l'application : aucune requête vers un tiers. -->
-
-    <script>
-      // Applique le thème mémorisé avant le premier rendu pour éviter tout flash.
-      (function () {
-        try {
-          var stored = localStorage.getItem('etc.theme');
-          document.documentElement.dataset.theme =
-            stored === 'light' || stored === 'dark' ? stored : 'light';
-        } catch (e) {
-          document.documentElement.dataset.theme = 'light';
-        }
-      })();
-    </script>
   </head>
   <body>
     <app-root></app-root>

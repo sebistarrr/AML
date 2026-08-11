@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { ThemeService } from '../../core/services/theme.service';
 
 interface Tab {
   readonly path: string;
@@ -21,12 +20,28 @@ interface Tab {
   template: `
     <header class="reference-header">
       <div class="reference-logo">
-        <img src="cnp-logo.png" alt="CNP Assurances" width="168" height="87" />
+        <!-- Logo dessiné en SVG : net à toute densité d'écran, et ses couleurs
+             suivent les jetons du thème plutôt qu'une image figée. -->
+        <svg class="logo" viewBox="0 0 168 87" preserveAspectRatio="xMidYMid meet" role="img">
+          <title>AML — dispositif de screening LCB-FT</title>
+
+          <g transform="translate(13 23)">
+            <path
+              class="logo__shield"
+              d="M20 1.5 37.5 7.8V22.4C37.5 32.6 30.1 40.6 20 43.2 9.9 40.6 2.5 32.6 2.5 22.4V7.8Z"
+            />
+            <circle class="logo__lens" cx="18.4" cy="18.4" r="6.6" />
+            <path class="logo__handle" d="M23.2 23.2 28.6 28.6" />
+          </g>
+
+          <text class="logo__word" x="63" y="51">AML</text>
+          <text class="logo__tag" x="64" y="64">SCREENING LCB-FT</text>
+        </svg>
       </div>
 
       <div class="reference-shell">
         <div class="reference-top-row">
-          <div class="reference-title">European Tower of Control</div>
+          <div class="reference-title">AML PROJECT</div>
 
           <div class="reference-account">
             <button
@@ -62,12 +77,6 @@ interface Tab {
                     <small>{{ user.group === 'LEVEL_1' ? 'Level 1' : 'Level 2' }}</small>
                   </button>
                 }
-                <button type="button" class="account-menu__item" (click)="theme.toggle()">
-                  <span>{{ theme.isDark() ? 'Thème clair' : 'Thème sombre' }}</span>
-                  <span class="material-symbols-outlined">
-                    {{ theme.isDark() ? 'light_mode' : 'dark_mode' }}
-                  </span>
-                </button>
               </div>
             }
 
@@ -113,15 +122,45 @@ interface Tab {
       min-width: 168px;
       height: var(--header-h);
       border-right: 1px solid var(--line);
-      background: #fff;
+      background: var(--surface);
       overflow: hidden;
     }
 
-    .reference-logo img {
+    .logo {
       display: block;
-      width: 168px;
-      height: 87px;
-      object-fit: cover;
+      width: 100%;
+      height: 100%;
+    }
+
+    .logo__shield {
+      fill: var(--blue-50);
+      stroke: var(--navy);
+      stroke-width: 2.2;
+      stroke-linejoin: round;
+    }
+
+    .logo__lens,
+    .logo__handle {
+      fill: none;
+      stroke: var(--pink);
+      stroke-width: 2.6;
+      stroke-linecap: round;
+    }
+
+    .logo__word {
+      fill: var(--navy);
+      font-family: var(--font-sans);
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .logo__tag {
+      fill: var(--muted);
+      font-family: var(--font-sans);
+      font-size: 7.2px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
     }
 
     .reference-shell {
@@ -142,10 +181,6 @@ interface Tab {
       font-weight: 600;
       line-height: 1;
       color: #0d3472;
-    }
-
-    :host-context([data-theme='dark']) .reference-title {
-      color: var(--text);
     }
 
     .reference-account {
@@ -170,11 +205,6 @@ interface Tab {
       background: var(--surface);
       color: #12366f;
       cursor: pointer;
-    }
-
-    :host-context([data-theme='dark']) .reference-user,
-    :host-context([data-theme='dark']) .reference-language {
-      color: var(--text);
     }
 
     .reference-user {
@@ -292,10 +322,6 @@ interface Tab {
       border-bottom: 2px solid transparent;
     }
 
-    :host-context([data-theme='dark']) .reference-tabs a {
-      color: var(--muted);
-    }
-
     .reference-tabs a.active {
       color: var(--pink);
       background: var(--surface-2);
@@ -358,17 +384,10 @@ interface Tab {
         height: 64px;
       }
 
-      .reference-logo,
-      .reference-logo img {
+      .reference-logo {
         width: 110px;
         min-width: 110px;
         height: 64px;
-      }
-
-      .reference-logo img {
-        width: 124px;
-        object-fit: cover;
-        object-position: left top;
       }
 
       .reference-top-row {
@@ -429,7 +448,6 @@ interface Tab {
 })
 export class HeaderComponent {
   protected readonly auth = inject(AuthService);
-  protected readonly theme = inject(ThemeService);
 
   protected readonly accountOpen = signal(false);
 

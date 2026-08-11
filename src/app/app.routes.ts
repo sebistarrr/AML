@@ -18,41 +18,41 @@ export const routes: Routes = [
 
       {
         path: 'my-alerts',
-        title: 'My alerts — European Tower of Control',
+        title: 'My alerts — AML PROJECT',
         loadComponent: () =>
           import('./features/alerts/basket/basket').then((m) => m.BasketComponent),
         data: { scope: 'mine' },
       },
       {
         path: 'alert-basket',
-        title: 'Alert Basket — European Tower of Control',
+        title: 'Alert Basket — AML PROJECT',
         loadComponent: () =>
           import('./features/alerts/basket/basket').then((m) => m.BasketComponent),
         data: { scope: 'open' },
       },
       {
         path: 'processed-alerts',
-        title: 'Processed alerts — European Tower of Control',
+        title: 'Processed alerts — AML PROJECT',
         loadComponent: () =>
           import('./features/alerts/basket/basket').then((m) => m.BasketComponent),
         data: { scope: 'processed' },
       },
       {
         path: 'search-person',
-        title: 'Search person — European Tower of Control',
+        title: 'Search person — AML PROJECT',
         loadComponent: () =>
           import('./features/persons/search/person-search').then((m) => m.PersonSearchComponent),
       },
 
       {
         path: 'alerts/:alertId',
-        title: 'Alert processing — European Tower of Control',
+        title: 'Alert processing — AML PROJECT',
         loadComponent: () =>
           import('./features/alerts/processing/processing').then((m) => m.ProcessingComponent),
       },
       {
         path: 'person/:personId',
-        title: 'Profil de risque — European Tower of Control',
+        title: 'Profil de risque — AML PROJECT',
         loadComponent: () =>
           import('./features/persons/profile/person-profile').then((m) => m.PersonProfileComponent),
       },
