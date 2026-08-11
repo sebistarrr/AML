@@ -68,7 +68,7 @@ src/app/
 │   └── state/             AlertStore — source de vérité des alertes
 ├── layout/
 │   ├── app-shell/         Coquille et zone de contenu
-│   └── header/            Bandeau CNP, compte, langue, onglets
+│   └── header/            Bandeau, compte, langue, onglets
 ├── shared/                Briques partagées
 │   ├── ui/overlay/        Modale, panneau latéral, notifications
 │   ├── pipes/             Formats d'affichage
@@ -153,6 +153,24 @@ affichés par les paginateurs des maquettes : **706 alertes ouvertes** et
 Le générateur est semé : à build identique, données identiques. Aucune alerte
 générée n'est affectée au compte par défaut, afin que la corbeille
 « My alerts » reste celle des maquettes.
+
+### Référentiel des filiales
+
+Filiales, sous-entités, identifiants système et comptes sont **fictifs**. Deux
+règles tiennent ce référentiel, et deux tests les vérifient :
+
+| Filiale           | Sous-entité       | Identifiant système | Pays       |
+| ----------------- | ----------------- | ------------------- | ---------- |
+| Nordia Life       | Nordia Life DAC   | `SYS_NORDIA`        | Irlande    |
+| Astrea Assurances | Astrea France     | `SYS_ASTREA`        | France     |
+| Verema Seguros    | Verema España     | `SYS_VEREMA`        | Espagne    |
+| Lumina Vita       | Lumina Italia     | `SYS_LUMINA`        | Italie     |
+| Helvia Insurance  | Helvia Luxembourg | `SYS_HELVIA`        | Luxembourg |
+
+**Cinq filiales au plus**, et **un identifiant système par filiale**. Cette
+seconde règle est structurelle : le système est porté par la filiale, jamais
+par la personne ou par l'alerte, qui le lisent au référentiel. Aucun jeu de
+données ne peut donc en introduire un second par inadvertance.
 
 La bascule de compte (menu profil du bandeau) permet de parcourir l'application
 sous chaque niveau d'habilitation. L'utilisateur par défaut est `STRAN`

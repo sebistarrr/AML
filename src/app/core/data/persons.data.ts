@@ -11,6 +11,19 @@
 
 import type { Person, PersonLink, PostalAddress, RiskComponent, RiskLevel } from '../models';
 import { ALERTS, PROFILE_LEGAL_PERSON_ID, PROFILE_NATURAL_PERSON_ID } from './alerts.data';
+import { entityOf, type EntityId } from './reference.data';
+
+/**
+ * Rattachement d'une personne à sa filiale.
+ *
+ * Les trois champs sont lus au référentiel plutôt que recopiés : une personne
+ * ne peut donc pas porter l'identifiant système d'une autre filiale, même par
+ * héritage d'un autre enregistrement.
+ */
+function attachedTo(id: EntityId): Pick<Person, 'entity' | 'subEntity' | 'systemId'> {
+  const entity = entityOf(id);
+  return { entity: entity.name, subEntity: entity.subEntity, systemId: entity.systemId };
+}
 
 const EMPTY_ADDRESS: PostalAddress = {
   recipientName: null,
@@ -39,16 +52,16 @@ const PROFILE_LINKS: readonly PersonLink[] = [
   {
     linkType: 'Ultimate beneficial owner',
     personId: 'PM123456789',
-    personEntity: 'CNP Italia',
+    personEntity: 'Lumina Vita',
     linkedPersonId: 'PP123456789',
-    linkedPersonEntity: 'CNP Italia',
+    linkedPersonEntity: 'Lumina Vita',
   },
   {
     linkType: 'Legal representative',
     personId: 'PM987654321',
-    personEntity: 'CNP Italia',
+    personEntity: 'Lumina Vita',
     linkedPersonId: 'PP987654321',
-    linkedPersonEntity: 'CNP Italia',
+    linkedPersonEntity: 'Lumina Vita',
   },
 ];
 
@@ -62,9 +75,7 @@ const CT313: Person = {
   type: 'NATURAL',
   partnerId: 'CT313',
   ricId: 'AAUW6266',
-  systemId: 'CrashTest',
-  entity: 'CNP Assicura',
-  subEntity: 'CNP Assicura',
+  ...attachedTo('lumina'),
   updatedAt: '30/04/2026 à 17:56',
   identity: {
     surname: null,
@@ -97,9 +108,7 @@ const PROFILE_NATURAL: Person = {
   type: 'NATURAL',
   partnerId: PROFILE_NATURAL_PERSON_ID,
   ricId: 'AAUW6266',
-  systemId: 'MART3',
-  entity: 'CNP Italia',
-  subEntity: 'CNP Italia',
+  ...attachedTo('lumina'),
   updatedAt: '05/07/2026 à 14:22',
   identity: {
     surname: 'TRAN',
@@ -132,9 +141,7 @@ const PROFILE_LEGAL: Person = {
   type: 'LEGAL',
   partnerId: PROFILE_LEGAL_PERSON_ID,
   ricId: 'AAUW6266',
-  systemId: 'MART3',
-  entity: 'CNP Italia',
-  subEntity: 'CNP Italia',
+  ...attachedTo('lumina'),
   updatedAt: '05/07/2026 à 14:22',
   identity: null,
   company: {
@@ -164,8 +171,7 @@ const SEARCH_NATURALS: readonly Person[] = [
     ...PROFILE_NATURAL,
     id: 'PP123456790',
     partnerId: 'PP123456790',
-    entity: 'CNP Assurances',
-    subEntity: 'CNP France',
+    ...attachedTo('astrea'),
     identity: {
       surname: 'TRAN',
       alternateName: 'Alexandre',
@@ -187,9 +193,7 @@ const SEARCH_NATURALS: readonly Person[] = [
     ...PROFILE_NATURAL,
     id: 'PP123456791',
     partnerId: 'PP123456791',
-    systemId: 'MART4',
-    entity: 'CNP Iberia',
-    subEntity: 'CNP España',
+    ...attachedTo('verema'),
     identity: {
       surname: 'TRAN',
       alternateName: 'Marie',
@@ -215,8 +219,7 @@ const SEARCH_LEGALS: readonly Person[] = [
     ...PROFILE_LEGAL,
     id: 'PM123456790',
     partnerId: 'PM123456790',
-    entity: 'CNP ABP',
-    subEntity: 'CNP ABP',
+    ...attachedTo('astrea'),
     company: {
       companyName: 'TRAN SERVICES',
       legalStatus: 'SARL',
@@ -235,9 +238,7 @@ const SEARCH_LEGALS: readonly Person[] = [
     ...PROFILE_LEGAL,
     id: 'PM123456791',
     partnerId: 'PM123456791',
-    systemId: 'MART4',
-    entity: 'CNP Assicura',
-    subEntity: 'CNP Assicura',
+    ...attachedTo('lumina'),
     company: {
       companyName: 'TRAN INVESTMENTS',
       legalStatus: 'SA',

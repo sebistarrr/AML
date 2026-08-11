@@ -40,8 +40,16 @@ export interface Entity {
   readonly id: string;
   readonly name: string;
   readonly country: string;
-  /** Sous-entités rattachées. Une entité sans filiale se porte elle-même. */
-  readonly subEntities: readonly string[];
+  /** Sous-entité opérationnelle rattachée — une seule par filiale à ce stade. */
+  readonly subEntity: string;
+  /**
+   * Système source alimentant le screening.
+   *
+   * Il est porté par la filiale, et non par la personne : c'est ce qui garantit
+   * qu'une filiale n'expose qu'un identifiant système, sans qu'aucun jeu de
+   * données puisse en introduire un second par inadvertance.
+   */
+  readonly systemId: string;
 }
 
 /* -----------------------------------------------------------------------------

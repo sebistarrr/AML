@@ -1,5 +1,6 @@
 import { ALERTS, OPEN_ALERT_COUNT, PROCESSED_ALERT_COUNT } from './alerts.data';
 import { PERSONS, findPerson } from './persons.data';
+import { DEFAULT_USER_ID, ENTITIES, USER_IDS } from './reference.data';
 import { ALERT_TYPOLOGIES, isClosedStatus } from '../models';
 
 describe('jeu de données des alertes', () => {
@@ -38,11 +39,11 @@ describe('jeu de données des alertes', () => {
     expect(first[0]).toMatchObject({
       status: 'IN_PROCESS_L2',
       personId: 'SP_422421',
-      systemId: 'SRC_1VQF9P',
+      systemId: 'SYS_NORDIA',
       personType: 'LEGAL',
       alertDate: '24/12/2025',
       typology: 'SANCTION',
-      entity: 'CNP Europe Life DAC',
+      entity: 'Nordia Life',
       user: 'STRAN',
       maxRate: 99.5202,
     });
@@ -54,7 +55,7 @@ describe('jeu de données des alertes', () => {
     expect(alert).toMatchObject({
       factivaId: '13604505',
       personId: 'CT313',
-      entity: 'CNP Assicura',
+      entity: 'Lumina Vita',
       maxRate: 99.0698,
       alertDateTime: '30/04/2026 17:56',
       status: 'IN_PROCESS_L2',
@@ -81,9 +82,42 @@ describe('jeu de données des alertes', () => {
 
     expect(findPerson('CT313')).toMatchObject({
       ricId: 'AAUW6266',
-      systemId: 'CrashTest',
-      entity: 'CNP Assicura',
+      systemId: 'SYS_LUMINA',
+      entity: 'Lumina Vita',
     });
+  });
+
+  it('tient le référentiel à cinq filiales, un identifiant système chacune', () => {
+    expect(ENTITIES.length).toBeLessThanOrEqual(5);
+
+    const systemsByEntity = new Map<string, Set<string>>();
+    for (const alert of ALERTS) {
+      const systems = systemsByEntity.get(alert.entity) ?? new Set<string>();
+      systems.add(alert.systemId);
+      systemsByEntity.set(alert.entity, systems);
+    }
+
+    expect([...systemsByEntity.keys()].sort()).toEqual(
+      ENTITIES.map((entity) => entity.name).sort(),
+    );
+    for (const [entity, systems] of systemsByEntity) {
+      expect({ entity, systems: systems.size }).toEqual({ entity, systems: 1 });
+    }
+
+    for (const person of PERSONS) {
+      const entity = ENTITIES.find((candidate) => candidate.name === person.entity);
+      expect(entity).toBeDefined();
+      expect(person.systemId).toBe(entity?.systemId);
+      expect(person.subEntity).toBe(entity?.subEntity);
+    }
+  });
+
+  it("n'affecte les alertes générées qu'à des comptes du référentiel", () => {
+    const assigned = new Set(ALERTS.map((alert) => alert.user).filter((user) => user !== null));
+    for (const user of assigned) {
+      expect(USER_IDS).toContain(user);
+    }
+    expect(assigned).toContain(DEFAULT_USER_ID);
   });
 
   it('déduit le risque global de la composante la plus sévère', () => {

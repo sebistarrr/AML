@@ -1,103 +1,129 @@
 /**
- * Référentiel des entités du groupe et des comptes utilisateurs.
+ * Référentiel des filiales et des comptes utilisateurs.
  *
- * Les entités, sous-entités et identifiants de connexion reprennent ceux des
- * maquettes de référence : ce sont eux qui alimentent les colonnes
- * « Entity », « Sub-entity », « User group » et « User » des corbeilles.
+ * Les filiales, sous-entités, identifiants système et comptes sont **fictifs**.
+ * Ils alimentent les colonnes « Entity », « Sub-entity », « User group » et
+ * « User » des corbeilles, ainsi que les filtres du panneau de recherche.
+ *
+ * Deux règles tiennent le jeu de données :
+ *   - cinq filiales, pas davantage ;
+ *   - un identifiant système par filiale, porté par la filiale elle-même.
  */
 
 import type { Entity, User } from '../models';
 
-export const ENTITIES: readonly Entity[] = [
+export const ENTITIES = [
   {
-    id: 'europe-life',
-    name: 'CNP Europe Life DAC',
+    id: 'nordia',
+    name: 'Nordia Life',
     country: 'Irlande',
-    subEntities: ['CNP Europe Life DAC'],
-  },
-  { id: 'italia', name: 'CNP Italia', country: 'Italie', subEntities: ['CNP Italia'] },
-  { id: 'abp', name: 'CNP ABP', country: 'France', subEntities: ['CNP ABP'] },
-  {
-    id: 'luxembourg',
-    name: 'CNP Luxembourg',
-    country: 'Luxembourg',
-    subEntities: ['CNP Luxembourg'],
+    subEntity: 'Nordia Life DAC',
+    systemId: 'SYS_NORDIA',
   },
   {
-    id: 'iberia',
-    name: 'CNP Iberia',
-    country: 'Espagne',
-    subEntities: ['CNP Iberia', 'CNP España'],
-  },
-  { id: 'assicura', name: 'CNP Assicura', country: 'Italie', subEntities: ['CNP Assicura'] },
-  {
-    id: 'assurances',
-    name: 'CNP Assurances',
+    id: 'astrea',
+    name: 'Astrea Assurances',
     country: 'France',
-    subEntities: ['CNP France'],
+    subEntity: 'Astrea France',
+    systemId: 'SYS_ASTREA',
   },
-];
+  {
+    id: 'verema',
+    name: 'Verema Seguros',
+    country: 'Espagne',
+    subEntity: 'Verema España',
+    systemId: 'SYS_VEREMA',
+  },
+  {
+    id: 'lumina',
+    name: 'Lumina Vita',
+    country: 'Italie',
+    subEntity: 'Lumina Italia',
+    systemId: 'SYS_LUMINA',
+  },
+  {
+    id: 'helvia',
+    name: 'Helvia Insurance',
+    country: 'Luxembourg',
+    subEntity: 'Helvia Luxembourg',
+    systemId: 'SYS_HELVIA',
+  },
+] as const satisfies readonly Entity[];
 
-/** Noms d'entité, dans l'ordre du filtre « Entity » du panneau de recherche. */
+/** Clé d'une filiale — l'union des identifiants ci-dessus. */
+export type EntityId = (typeof ENTITIES)[number]['id'];
+
+const ENTITY_INDEX = new Map(ENTITIES.map((entity) => [entity.id, entity]));
+
+export function entityOf(id: EntityId): Entity {
+  return ENTITY_INDEX.get(id)!;
+}
+
+/** Noms de filiale, dans l'ordre du filtre « Entity ». */
 export const ENTITY_NAMES: readonly string[] = ENTITIES.map((entity) => entity.name);
 
-/** Sous-entités, dédoublonnées, pour le filtre « Sub-entity ». */
-export const SUB_ENTITY_NAMES: readonly string[] = [
-  ...new Set(ENTITIES.flatMap((entity) => entity.subEntities)),
-];
+/** Sous-entités, pour le filtre « Sub-entity ». */
+export const SUB_ENTITY_NAMES: readonly string[] = ENTITIES.map((entity) => entity.subEntity);
+
+/** Identifiants système — un par filiale, d'où l'égalité des deux longueurs. */
+export const SYSTEM_IDS: readonly string[] = ENTITIES.map((entity) => entity.systemId);
+
+/* -----------------------------------------------------------------------------
+   Comptes
+   -------------------------------------------------------------------------- */
 
 export const USERS: readonly User[] = [
   {
     id: 'STRAN',
     firstName: 'Sébastien',
     lastName: 'Tran',
-    email: 'sebastien.tran@cnp.fr',
+    email: 'sebastien.tran@example.com',
     group: 'LEVEL_2',
-    entityId: 'assicura',
+    entityId: 'lumina',
   },
   {
-    id: 'BFOURCAD',
-    firstName: 'Bruno',
-    lastName: 'Fourcade',
-    email: 'bruno.fourcade@cnp.fr',
+    id: 'ADUBOIS',
+    firstName: 'Alice',
+    lastName: 'Dubois',
+    email: 'alice.dubois@example.com',
     group: 'LEVEL_2',
-    entityId: 'europe-life',
+    entityId: 'nordia',
   },
   {
-    id: 'FMAHDJAN',
-    firstName: 'Farid',
-    lastName: 'Mahdjan',
-    email: 'farid.mahdjan@cnp.fr',
+    id: 'MRENARD',
+    firstName: 'Marc',
+    lastName: 'Renard',
+    email: 'marc.renard@example.com',
     group: 'LEVEL_2',
-    entityId: 'luxembourg',
+    entityId: 'helvia',
   },
   {
-    id: 'OHEJJAJ1',
-    firstName: 'Omar',
-    lastName: 'Hejjaj',
-    email: 'omar.hejjaj@cnp.fr',
+    id: 'LFONTAINE',
+    firstName: 'Léa',
+    lastName: 'Fontaine',
+    email: 'lea.fontaine@example.com',
     group: 'LEVEL_2',
-    entityId: 'europe-life',
+    entityId: 'nordia',
   },
   {
-    id: 'FVALET',
-    firstName: 'Fanny',
-    lastName: 'Valet',
-    email: 'fanny.valet@cnp.fr',
+    id: 'PMOREAU',
+    firstName: 'Paul',
+    lastName: 'Moreau',
+    email: 'paul.moreau@example.com',
     group: 'LEVEL_1',
-    entityId: 'italia',
+    entityId: 'lumina',
   },
   {
-    id: 'MCARRERE',
-    firstName: 'Manon',
-    lastName: 'Carrère',
-    email: 'manon.carrere@cnp.fr',
+    id: 'CGARNIER',
+    firstName: 'Chloé',
+    lastName: 'Garnier',
+    email: 'chloe.garnier@example.com',
     group: 'LEVEL_1',
-    entityId: 'abp',
+    entityId: 'astrea',
   },
 ];
 
-/** Compte ouvert par défaut : celui du bandeau des maquettes. */
+/** Compte ouvert par défaut. */
 export const DEFAULT_USER_ID = 'STRAN';
 
 /** Identifiants de connexion, pour le filtre « User » et l'affectation. */

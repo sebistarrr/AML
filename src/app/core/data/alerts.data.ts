@@ -24,6 +24,7 @@ import type {
   ReconciliationRow,
   UserGroup,
 } from '../models';
+import { DEFAULT_USER_ID, ENTITIES, USERS, entityOf, type EntityId } from './reference.data';
 
 /* -----------------------------------------------------------------------------
    Volumes cibles, lus sur les paginateurs des maquettes
@@ -43,9 +44,9 @@ interface AlertSeed {
   readonly typology?: AlertTypology;
   readonly personId: string;
   readonly personType: PersonType;
-  readonly systemId: string;
-  readonly entity: string;
-  readonly subEntity?: string;
+  /** Filiale d'où provient l'alerte : elle porte l'entité, la sous-entité et
+      l'identifiant système, qu'aucune graine ne redéfinit. */
+  readonly entityId: EntityId;
   readonly alertDate: string;
   readonly time?: string;
   readonly maxRate: number;
@@ -91,9 +92,9 @@ function toAlert(seed: AlertSeed): Alert {
     typology,
     personId: seed.personId,
     personType: seed.personType,
-    systemId: seed.systemId,
-    entity: seed.entity,
-    subEntity: seed.subEntity ?? seed.entity,
+    systemId: entityOf(seed.entityId).systemId,
+    entity: entityOf(seed.entityId).name,
+    subEntity: entityOf(seed.entityId).subEntity,
     alertDate: seed.alertDate,
     alertDateTime: `${seed.alertDate} ${seed.time ?? '09:12'}`,
     maxRate: seed.maxRate,
@@ -118,16 +119,13 @@ function toAlert(seed: AlertSeed): Alert {
    1. Corbeille « Alert Basket » — dix premières lignes de la maquette
    -------------------------------------------------------------------------- */
 
-const EUROPE_LIFE = 'CNP Europe Life DAC';
-
 const BASKET_SEEDS: readonly AlertSeed[] = [
   {
     id: 1,
     status: 'IN_PROCESS_L2',
     personId: 'SP_422421',
     personType: 'LEGAL',
-    systemId: 'SRC_1VQF9P',
-    entity: EUROPE_LIFE,
+    entityId: 'nordia',
     alertDate: '24/12/2025',
     maxRate: 99.5202,
     user: 'STRAN',
@@ -138,11 +136,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'SP_422421',
     personType: 'LEGAL',
-    systemId: 'SRC_1VQF9P',
-    entity: EUROPE_LIFE,
+    entityId: 'nordia',
     alertDate: '24/12/2025',
     maxRate: 99.5202,
-    user: 'BFOURCAD',
+    user: 'ADUBOIS',
     factivaId: '2417804',
   },
   {
@@ -150,11 +147,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'IN_PROCESS_L2',
     personId: 'SP_422424',
     personType: 'LEGAL',
-    systemId: 'SRC_1VQF9P',
-    entity: EUROPE_LIFE,
+    entityId: 'nordia',
     alertDate: '24/12/2025',
     maxRate: 99.5205,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '2417811',
   },
   {
@@ -162,11 +158,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'SP_982507',
     personType: 'NATURAL',
-    systemId: 'SRC_Q7W1UL',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '22/01/2026',
     maxRate: 11.6624,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '3105442',
   },
   {
@@ -174,11 +169,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'IN_PROCESS_L2',
     personId: 'SP_631349',
     personType: 'NATURAL',
-    systemId: 'SRC_HQ8G3N',
-    entity: 'CNP ABP',
+    entityId: 'astrea',
     alertDate: '22/01/2026',
     maxRate: 89.7748,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '3105518',
   },
   {
@@ -186,11 +180,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'IN_PROCESS_L2',
     personId: 'SP_661743',
     personType: 'NATURAL',
-    systemId: 'SRC_E4BLJ3',
-    entity: 'CNP ABP',
+    entityId: 'astrea',
     alertDate: '22/01/2026',
     maxRate: 49.4563,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '3105603',
   },
   {
@@ -198,11 +191,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'IN_PROCESS_L2',
     personId: 'SP_420232',
     personType: 'NATURAL',
-    systemId: 'SRC_UUYOUK',
-    entity: 'CNP Luxembourg',
+    entityId: 'helvia',
     alertDate: '22/01/2026',
     maxRate: 75.2112,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '3105744',
   },
   {
@@ -210,11 +202,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'SP_420232',
     personType: 'NATURAL',
-    systemId: 'SRC_UUYOUK',
-    entity: 'CNP Luxembourg',
+    entityId: 'helvia',
     alertDate: '22/01/2026',
     maxRate: 93.155,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '3105745',
   },
   {
@@ -222,11 +213,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'IN_PROCESS_L2',
     personId: 'SP_518146',
     personType: 'NATURAL',
-    systemId: 'SRC_6JIMSE',
-    entity: 'CNP Luxembourg',
+    entityId: 'helvia',
     alertDate: '22/01/2026',
     maxRate: 91.8744,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '3105812',
   },
   {
@@ -234,11 +224,10 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'SP_911634',
     personType: 'NATURAL',
-    systemId: 'SRC_A4SBDM',
-    entity: EUROPE_LIFE,
+    entityId: 'nordia',
     alertDate: '22/01/2026',
     maxRate: 99.7427,
-    user: 'FMAHDJAN',
+    user: 'MRENARD',
     factivaId: '3105889',
   },
 ];
@@ -253,8 +242,7 @@ const MY_ALERTS_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'SP_959392',
     personType: 'NATURAL',
-    systemId: 'SRC_NOQRXP',
-    entity: 'CNP ABP',
+    entityId: 'astrea',
     alertDate: '22/01/2026',
     maxRate: 98.54,
     user: 'STRAN',
@@ -265,8 +253,7 @@ const MY_ALERTS_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'SP_774249',
     personType: 'LEGAL',
-    systemId: 'SRC_UQ25UM',
-    entity: EUROPE_LIFE,
+    entityId: 'nordia',
     alertDate: '22/01/2026',
     maxRate: 73.5194,
     user: 'STRAN',
@@ -277,8 +264,7 @@ const MY_ALERTS_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'STR_PP_0076',
     personType: 'NATURAL',
-    systemId: 'TESTING_CASE',
-    entity: 'CNP Iberia',
+    entityId: 'verema',
     alertDate: '17/03/2026',
     maxRate: 90,
     user: 'STRAN',
@@ -289,8 +275,7 @@ const MY_ALERTS_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'STR_AA_0001',
     personType: 'NATURAL',
-    systemId: 'TESTING_CASE',
-    entity: 'CNP Assicura',
+    entityId: 'lumina',
     alertDate: '17/03/2026',
     maxRate: 99.9999,
     user: 'STRAN',
@@ -301,8 +286,7 @@ const MY_ALERTS_SEEDS: readonly AlertSeed[] = [
     status: 'ESCALATED_L2',
     personId: 'STR_UBO_0003',
     personType: 'LEGAL',
-    systemId: 'STR_UBO_TEST',
-    entity: 'CNP Assicura',
+    entityId: 'lumina',
     alertDate: '30/03/2026',
     maxRate: 99.9999,
     user: 'STRAN',
@@ -335,8 +319,7 @@ const PROCESSING_SEED: AlertSeed = {
   typology: 'SANCTION',
   personId: 'CT313',
   personType: 'NATURAL',
-  systemId: 'CrashTest',
-  entity: 'CNP Assicura',
+  entityId: 'lumina',
   alertDate: '30/04/2026',
   time: '17:56',
   maxRate: 99.0698,
@@ -367,8 +350,7 @@ function processedSeed(
     status,
     personId,
     personType: 'LEGAL',
-    systemId: 'SRC_1VQF9P',
-    entity: EUROPE_LIFE,
+    entityId: 'nordia',
     alertDate: '24/12/2025',
     maxRate,
     user,
@@ -384,15 +366,15 @@ function processedSeed(
 
 const PROCESSED_SEEDS: readonly AlertSeed[] = [
   processedSeed(6, 'SP_422425', 'CLEARED_L2', 'STRAN', 99.5206),
-  processedSeed(8, 'SP_422427', 'CLEARED_L2', 'OHEJJAJ1', 99.5208),
-  processedSeed(9, 'SP_422428', 'CLEARED_L2', 'OHEJJAJ1', 99.5209),
-  processedSeed(10, 'SP_422429', 'CLEARED_L2', 'OHEJJAJ1', 99.521),
-  processedSeed(12, 'SP_422431', 'CLEARED_L2', 'OHEJJAJ1', 99.5212),
-  processedSeed(13, 'SP_422432', 'BLACKLISTED', 'FMAHDJAN', 99.5213),
-  processedSeed(14, 'SP_422433', 'BLACKLISTED', 'FMAHDJAN', 99.5214),
-  processedSeed(17, 'SP_422436', 'BLACKLISTED', 'FMAHDJAN', 99.5217),
-  processedSeed(18, 'SP_422437', 'CLEARED_L2', 'FMAHDJAN', 99.5218),
-  processedSeed(20, 'SP_422439', 'CLEARED_L2', 'FMAHDJAN', 99.522),
+  processedSeed(8, 'SP_422427', 'CLEARED_L2', 'LFONTAINE', 99.5208),
+  processedSeed(9, 'SP_422428', 'CLEARED_L2', 'LFONTAINE', 99.5209),
+  processedSeed(10, 'SP_422429', 'CLEARED_L2', 'LFONTAINE', 99.521),
+  processedSeed(12, 'SP_422431', 'CLEARED_L2', 'LFONTAINE', 99.5212),
+  processedSeed(13, 'SP_422432', 'BLACKLISTED', 'MRENARD', 99.5213),
+  processedSeed(14, 'SP_422433', 'BLACKLISTED', 'MRENARD', 99.5214),
+  processedSeed(17, 'SP_422436', 'BLACKLISTED', 'MRENARD', 99.5217),
+  processedSeed(18, 'SP_422437', 'CLEARED_L2', 'MRENARD', 99.5218),
+  processedSeed(20, 'SP_422439', 'CLEARED_L2', 'MRENARD', 99.522),
 ];
 
 /* -----------------------------------------------------------------------------
@@ -413,12 +395,11 @@ const NATURAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     circuit: 'Temps réel',
     personId: PROFILE_NATURAL_PERSON_ID,
     personType: 'NATURAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '05/07/2026',
     maxRate: 96.4102,
     userGroup: 'LEVEL_1',
-    user: 'FVALET',
+    user: 'PMOREAU',
     factivaId: 'FACTIVA231',
   },
   {
@@ -429,8 +410,7 @@ const NATURAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     circuit: 'Temps réel',
     personId: PROFILE_NATURAL_PERSON_ID,
     personType: 'NATURAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '01/07/2026',
     maxRate: 91.2277,
     userGroup: 'LEVEL_2',
@@ -446,12 +426,11 @@ const NATURAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     typology: 'RCA',
     personId: PROFILE_NATURAL_PERSON_ID,
     personType: 'NATURAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '29/06/2026',
     maxRate: 64.8319,
     userGroup: 'LEVEL_1',
-    user: 'MCARRERE',
+    user: 'CGARNIER',
     factivaId: 'FACTIVA123',
     decision: 'CLEARED_L1',
     processedAt: '30/06/2026',
@@ -463,8 +442,7 @@ const NATURAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     typology: 'HRTC',
     personId: PROFILE_NATURAL_PERSON_ID,
     personType: 'NATURAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '14/06/2026',
     maxRate: 100,
     userGroup: 'LEVEL_2',
@@ -482,12 +460,11 @@ const NATURAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     circuit: 'Temps réel',
     personId: PROFILE_NATURAL_PERSON_ID,
     personType: 'NATURAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '23/05/2026',
     maxRate: 58.1147,
     userGroup: 'LEVEL_1',
-    user: 'FVALET',
+    user: 'PMOREAU',
     factivaId: 'FACTIVA471',
     decision: 'CLEARED_L1',
     processedAt: '24/05/2026',
@@ -499,12 +476,11 @@ const NATURAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     typology: 'PEP',
     personId: PROFILE_NATURAL_PERSON_ID,
     personType: 'NATURAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '09/05/2026',
     maxRate: 61.7705,
     userGroup: 'LEVEL_1',
-    user: 'FVALET',
+    user: 'PMOREAU',
     factivaId: 'FACTIVA498',
     decision: 'CLEARED_L1',
     processedAt: '12/05/2026',
@@ -516,12 +492,11 @@ const NATURAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     typology: 'RCA',
     personId: PROFILE_NATURAL_PERSON_ID,
     personType: 'NATURAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '18/04/2026',
     maxRate: 55.4092,
     userGroup: 'LEVEL_1',
-    user: 'MCARRERE',
+    user: 'CGARNIER',
     factivaId: 'FACTIVA470',
     decision: 'CLEARED_L1',
     processedAt: '20/04/2026',
@@ -537,8 +512,7 @@ const LEGAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     circuit: 'Temps réel',
     personId: PROFILE_LEGAL_PERSON_ID,
     personType: 'LEGAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '05/07/2026',
     maxRate: 99.8814,
     userGroup: 'LEVEL_2',
@@ -554,8 +528,7 @@ const LEGAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     typology: 'HRTC',
     personId: PROFILE_LEGAL_PERSON_ID,
     personType: 'LEGAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '14/06/2026',
     maxRate: 100,
     userGroup: 'LEVEL_2',
@@ -573,12 +546,11 @@ const LEGAL_PROFILE_SEEDS: readonly AlertSeed[] = [
     circuit: 'Temps réel',
     personId: PROFILE_LEGAL_PERSON_ID,
     personType: 'LEGAL',
-    systemId: 'MART3',
-    entity: 'CNP Italia',
+    entityId: 'lumina',
     alertDate: '23/05/2026',
     maxRate: 57.2201,
     userGroup: 'LEVEL_1',
-    user: 'FVALET',
+    user: 'PMOREAU',
     factivaId: 'FACTIVA471',
     decision: 'CLEARED_L1',
     processedAt: '24/05/2026',
@@ -681,17 +653,9 @@ const COUNTRIES = [
   'BRA',
 ] as const;
 
-const ENTITY_POOL = [
-  EUROPE_LIFE,
-  'CNP Italia',
-  'CNP ABP',
-  'CNP Luxembourg',
-  'CNP Iberia',
-  'CNP Assicura',
-] as const;
-
-/** Analystes pouvant recevoir une alerte générée — jamais le compte courant. */
-const ASSIGNABLE_USERS = ['BFOURCAD', 'FMAHDJAN', 'OHEJJAJ1', 'FVALET', 'MCARRERE'] as const;
+/** Analystes pouvant recevoir une alerte générée — jamais le compte courant,
+    pour que la corbeille « My alerts » reste celle des maquettes. */
+const ASSIGNABLE_USERS = USERS.filter((user) => user.id !== DEFAULT_USER_ID).map((user) => user.id);
 
 const OPEN_STATUSES: readonly AlertStatus[] = [
   'TO_CLEAR_L1',
@@ -795,7 +759,7 @@ function generateAlerts(count: number, closed: boolean, startId: number, seed: n
   for (let index = 0; index < count; index += 1) {
     const id = startId + index * 3 + Math.floor(random() * 3);
     const personType: PersonType = random() > 0.72 ? 'LEGAL' : 'NATURAL';
-    const entity = pick(random, ENTITY_POOL);
+    const entityId = pick(random, ENTITIES).id;
     const typology = pick(random, TYPOLOGY_POOL);
     const maxRate = Number((10 + random() * 90).toFixed(4));
     const alertDate = generatedDate(Math.floor(index / 6));
@@ -822,8 +786,7 @@ function generateAlerts(count: number, closed: boolean, startId: number, seed: n
         typology,
         personId: `SP_${300_000 + Math.floor(random() * 699_999)}`,
         personType,
-        systemId: `SRC_${pad(Math.floor(random() * 999_999), 6)}`,
-        entity,
+        entityId,
         alertDate,
         time: `${pad(8 + Math.floor(random() * 10), 2)}:${pad(Math.floor(random() * 60), 2)}`,
         maxRate,
