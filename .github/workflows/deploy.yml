@@ -39,8 +39,12 @@ jobs:
       # depuis la page 404 laisse le routeur Angular reprendre la main.
       - name: SPA fallback
         run: cp dist/AML/browser/index.html dist/AML/browser/404.html
+      # enablement crée le site Pages s'il n'existe pas encore : sans lui,
+      # l'action échoue sur un dépôt où Pages n'a jamais été activé à la main.
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
