@@ -20,6 +20,8 @@ import type {
   AlertTypology,
   Circuit,
   Decision,
+  PepFunction,
+  PepRelation,
   PersonType,
   ReconciliationRow,
   UserGroup,
@@ -59,6 +61,8 @@ interface AlertSeed {
   readonly processedAt?: string | null;
   readonly justification?: string | null;
   readonly reconciliation?: readonly ReconciliationRow[];
+  readonly pepFunctions?: readonly PepFunction[];
+  readonly pepRelations?: readonly PepRelation[];
 }
 
 const EMPTY_PERSON_ROW: ReconciliationRow = {
@@ -111,6 +115,19 @@ function toAlert(seed: AlertSeed): Alert {
     reconciliation:
       seed.reconciliation ??
       generatedReconciliation(seededRandom(hashCode(seed.personId)), seed.personType, seed.maxRate),
+    /* Les fonctions et les liens sont dérivés de l'alerte comme l'est le
+       rapprochement : deux consultations successives montrent le même dossier,
+       et seule la typologie décide de ce qui est renseigné. */
+    pepFunctions:
+      seed.pepFunctions ??
+      (typology === 'PEP'
+        ? generatedPepFunctions(seededRandom(hashCode(`${seed.personId}-pep-${seed.id}`)))
+        : []),
+    pepRelations:
+      seed.pepRelations ??
+      (typology === 'RCA'
+        ? generatedPepRelations(seededRandom(hashCode(`${seed.personId}-rca-${seed.id}`)))
+        : []),
     decision: seed.decision ?? null,
     processedAt: seed.processedAt ?? null,
     justification: seed.justification ?? null,
@@ -700,7 +717,76 @@ const CLOSED_DECISIONS: readonly Decision[] = [
   'BLACKLISTED',
 ];
 
-const TYPOLOGY_POOL: readonly AlertTypology[] = ['SANCTION', 'PEP', 'RCA', 'HRTC'];
+/**
+ * Typologies ouvertes à une personne physique — les quatre dispositifs.
+ *
+ * Une société ne peut être ni politiquement exposée ni proche d'une personne
+ * qui l'est : l'exposition politique et le lien familial ou d'affaires se
+ * rattachent à un individu. Seuls le gel des avoirs et le pays tiers à haut
+ * risque la concernent.
+ */
+const NATURAL_TYPOLOGY_POOL: readonly AlertTypology[] = ['SANCTION', 'PEP', 'RCA', 'HRTC'];
+const LEGAL_TYPOLOGY_POOL: readonly AlertTypology[] = ['SANCTION', 'HRTC'];
+
+/** Catégories de fonction publique et charges qui s'y rattachent. */
+const PEP_FUNCTION_CATALOGUE: readonly { category: string; labels: readonly string[] }[] = [
+  {
+    category: 'Head of State or Government',
+    labels: ['President of the Republic', 'Prime Minister'],
+  },
+  {
+    category: 'Government Minister',
+    labels: [
+      'Minister of Finance',
+      'Minister of the Interior',
+      'Minister of Foreign Affairs',
+      'Deputy Minister of Defence',
+    ],
+  },
+  {
+    category: 'Member of Parliament',
+    labels: ['Member of the National Assembly', 'Senator', 'Chair of the Finance Committee'],
+  },
+  {
+    category: 'Supreme Court Judge',
+    labels: ['Justice of the Supreme Court', 'President of the Constitutional Court'],
+  },
+  {
+    category: 'Central Bank Board Member',
+    labels: ['Governor of the Central Bank', 'Member of the Monetary Policy Committee'],
+  },
+  {
+    category: 'Ambassador',
+    labels: ['Ambassador to the United Nations', 'Permanent Representative to the European Union'],
+  },
+  {
+    category: 'Senior Military Officer',
+    labels: ['Chief of the General Staff', 'Commander of the Naval Forces'],
+  },
+  {
+    category: 'State-Owned Enterprise Executive',
+    labels: ['Chief Executive Officer', 'Chair of the Supervisory Board'],
+  },
+  {
+    category: 'Political Party Executive',
+    labels: ['Secretary General', 'Treasurer'],
+  },
+  {
+    category: 'International Organisation Director',
+    labels: ['Executive Director', 'Regional Director'],
+  },
+];
+
+/** Natures de lien retenues par le dispositif RCA. */
+const PEP_RELATIONSHIPS: readonly string[] = [
+  'Spouse',
+  'Child',
+  'Parent',
+  'Sibling',
+  'Close business associate',
+  'Beneficial owner of a joint entity',
+  'Legal representative',
+];
 
 function pick<T>(random: () => number, values: readonly T[]): T {
   return values[Math.floor(random() * values.length)]!;
@@ -794,6 +880,47 @@ function generatedReconciliation(
   return rows;
 }
 
+/** Fonctions publiques d'une fiche PEP : une à trois, dont certaines en cours. */
+function generatedPepFunctions(random: () => number): readonly PepFunction[] {
+  const functions: PepFunction[] = [];
+  const count = 1 + Math.floor(random() * 3);
+
+  for (let index = 0; index < count; index += 1) {
+    const entry = pick(random, PEP_FUNCTION_CATALOGUE);
+    const day = 1 + Math.floor(random() * 28);
+    const month = 1 + Math.floor(random() * 12);
+    /* Bornée à 2015 : une prise de fonction plus tardive donnerait, une fois
+       le mandat écoulé, une date de fin postérieure à la date du jour. */
+    const startYear = 1995 + Math.floor(random() * 21);
+    const inProgress = random() > 0.66;
+    const term = 3 + Math.floor(random() * 6);
+
+    functions.push({
+      category: entry.category,
+      label: pick(random, entry.labels),
+      startDate: `${pad(day, 2)}/${pad(month, 2)}/${startYear}`,
+      endDate: inProgress ? null : `${pad(day, 2)}/${pad(month, 2)}/${startYear + term}`,
+    });
+  }
+
+  return functions;
+}
+
+/** Liens d'une fiche RCA vers les personnes exposées : un ou deux. */
+function generatedPepRelations(random: () => number): readonly PepRelation[] {
+  const relations: PepRelation[] = [];
+  const count = 1 + Math.floor(random() * 2);
+
+  for (let index = 0; index < count; index += 1) {
+    relations.push({
+      pepFactivaId: String(1_000_000 + Math.floor(random() * 8_999_999)),
+      relationship: pick(random, PEP_RELATIONSHIPS),
+    });
+  }
+
+  return relations;
+}
+
 function generateAlerts(count: number, closed: boolean, startId: number, seed: number): Alert[] {
   const random = seededRandom(seed);
   const alerts: Alert[] = [];
@@ -802,7 +929,10 @@ function generateAlerts(count: number, closed: boolean, startId: number, seed: n
     const id = startId + index * 3 + Math.floor(random() * 3);
     const personType: PersonType = random() > 0.72 ? 'LEGAL' : 'NATURAL';
     const entityId = pick(random, ENTITIES).id;
-    const typology = pick(random, TYPOLOGY_POOL);
+    const typology = pick(
+      random,
+      personType === 'LEGAL' ? LEGAL_TYPOLOGY_POOL : NATURAL_TYPOLOGY_POOL,
+    );
     const maxRate = Number((10 + random() * 90).toFixed(4));
     const alertDate = generatedDate(Math.floor(index / 6));
     const decision = closed ? pick(random, CLOSED_DECISIONS) : null;

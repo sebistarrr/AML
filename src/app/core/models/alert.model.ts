@@ -50,6 +50,34 @@ export interface ReconciliationRow {
   readonly incorporationCountry: string | null;
 }
 
+/**
+ * Fonction publique exercée par une personne politiquement exposée.
+ *
+ * C'est elle qui fonde l'alerte PEP : l'exposition ne tient pas à l'identité
+ * de la personne mais à la charge qu'elle occupe ou a occupée. Une date de fin
+ * absente signale une fonction toujours en cours.
+ */
+export interface PepFunction {
+  readonly category: string;
+  readonly label: string;
+  /** Date de prise de fonction, au format JJ/MM/AAAA. */
+  readonly startDate: string | null;
+  /** Date de cessation, absente tant que la fonction est exercée. */
+  readonly endDate: string | null;
+}
+
+/**
+ * Lien entre la personne screenée et une personne politiquement exposée.
+ *
+ * C'est ce qui fonde l'alerte RCA : la personne n'est pas elle-même exposée,
+ * elle est proche de quelqu'un qui l'est. L'identifiant renvoie à la fiche de
+ * la personne exposée chez le fournisseur de données.
+ */
+export interface PepRelation {
+  readonly pepFactivaId: string;
+  readonly relationship: string;
+}
+
 /** Action tracée dans l'onglet « Alert history ». */
 export type AlertHistoryAction =
   'ALERT_GENERATED' | 'ALERT_ASSIGNED' | 'STATUS_CHANGED' | 'COMMENT_ADDED' | 'DECISION_TAKEN';
@@ -115,6 +143,17 @@ export interface Alert {
   readonly user: string | null;
 
   readonly reconciliation: readonly ReconciliationRow[];
+
+  /**
+   * Fonctions publiques relevées sur la fiche listée. Renseignées pour une
+   * alerte PEP, vides partout ailleurs.
+   */
+  readonly pepFunctions: readonly PepFunction[];
+  /**
+   * Liens vers les personnes exposées. Renseignés pour une alerte RCA, vides
+   * partout ailleurs.
+   */
+  readonly pepRelations: readonly PepRelation[];
 
   readonly decision: Decision | null;
   readonly justification: string | null;

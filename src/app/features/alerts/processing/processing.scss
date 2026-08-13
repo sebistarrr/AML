@@ -160,45 +160,53 @@
   min-width: 1500px;
 }
 
-/* Les lignes forment un bloc encadré, détaché de l'en-tête : l'en-tête nomme
-   les colonnes, le cadre délimite ce qui est comparé. */
-.reconciliation th {
+/* Cadre commun aux tableaux de la fiche : les lignes forment un bloc encadré,
+   détaché de l'en-tête. L'en-tête nomme les colonnes, le cadre délimite les
+   données. Partagé par le rapprochement, les fonctions PEP et les liens RCA. */
+.framed-table th {
   height: 56px;
   border: 0;
 }
 
-.reconciliation td {
+.framed-table td {
   height: 52px;
   border-bottom: 1px solid var(--line);
   background-clip: padding-box;
 }
 
-.reconciliation td:first-child {
+.framed-table td:first-child {
   border-left: 1px solid var(--line);
 }
 
-.reconciliation td:last-child {
+.framed-table td:last-child {
   border-right: 1px solid var(--line);
 }
 
-.reconciliation tbody tr:first-of-type td {
+.framed-table tbody tr:first-of-type td {
   border-top: 1px solid var(--line);
 }
 
-.reconciliation tbody tr:first-of-type td:first-child {
+.framed-table tbody tr:first-of-type td:first-child {
   border-top-left-radius: 8px;
 }
 
-.reconciliation tbody tr:first-of-type td:last-child {
+.framed-table tbody tr:first-of-type td:last-child {
   border-top-right-radius: 8px;
 }
 
-.reconciliation tbody tr:last-of-type td:first-child {
+.framed-table tbody tr:last-of-type td:first-child {
   border-bottom-left-radius: 8px;
 }
 
-.reconciliation tbody tr:last-of-type td:last-child {
+.framed-table tbody tr:last-of-type td:last-child {
   border-bottom-right-radius: 8px;
+}
+
+/* Une fonction toujours exercée est le cas qui engage le plus : elle porte
+   l'encre d'accentuation plutôt qu'un tiret muet. */
+.pep__ongoing {
+  color: var(--pink);
+  font-weight: 600;
 }
 
 /* La ligne du référentiel sert de repère : elle reste en encre normale, les

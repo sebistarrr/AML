@@ -429,7 +429,7 @@
             @if (!isCollapsed('reconciliation')) {
               <div class="table-scroll">
                 <table
-                  class="data-table reconciliation"
+                  class="data-table framed-table reconciliation"
                   [class.reconciliation--natural]="current.personType !== 'LEGAL'"
                 >
                   <thead>
@@ -521,6 +521,112 @@
               </div>
             }
           </section>
+
+          <!-- Ce qui fonde l'alerte, selon le dispositif qui l'a déclenchée :
+               les charges publiques exercées pour une PEP, le lien avec une
+               personne exposée pour un RCA. Placé entre le rapprochement et la
+               décision, puisque c'est là-dessus que la décision se prend. -->
+          @if (current.typology === 'PEP') {
+            <section class="card">
+              <div class="card__head">
+                <span class="material-symbols-outlined">workspace_premium</span>
+                Politically exposed functions
+                <button
+                  type="button"
+                  class="card__toggle"
+                  [attr.aria-expanded]="!isCollapsed('functions')"
+                  (click)="toggleSection('functions')"
+                  aria-label="Replier la section"
+                >
+                  <span class="material-symbols-outlined">expand_less</span>
+                </button>
+              </div>
+
+              @if (!isCollapsed('functions')) {
+                <div class="table-scroll">
+                  <table class="data-table framed-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Function category</th>
+                        <th scope="col">Function label</th>
+                        <th scope="col">Start date</th>
+                        <th scope="col">End date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (entry of current.pepFunctions; track $index) {
+                        <tr>
+                          <td>{{ entry.category }}</td>
+                          <td>{{ entry.label }}</td>
+                          <td>{{ entry.startDate | dash }}</td>
+                          <!-- Une fonction toujours exercée n'a pas de date de
+                               fin : c'est le cas le plus sensible du tableau. -->
+                          <td>
+                            @if (entry.endDate) {
+                              {{ entry.endDate }}
+                            } @else {
+                              <span class="pep__ongoing">Ongoing</span>
+                            }
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td class="is-empty" colspan="4">
+                            Aucune fonction publique relevée sur cette fiche.
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </section>
+          }
+
+          @if (current.typology === 'RCA') {
+            <section class="card">
+              <div class="card__head">
+                <span class="material-symbols-outlined">verified_user</span>
+                Relations with politically exposed persons
+                <button
+                  type="button"
+                  class="card__toggle"
+                  [attr.aria-expanded]="!isCollapsed('relations')"
+                  (click)="toggleSection('relations')"
+                  aria-label="Replier la section"
+                >
+                  <span class="material-symbols-outlined">expand_less</span>
+                </button>
+              </div>
+
+              @if (!isCollapsed('relations')) {
+                <div class="table-scroll">
+                  <table class="data-table framed-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">PEP Factiva ID</th>
+                        <th scope="col">Relationship</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (relation of current.pepRelations; track $index) {
+                        <tr>
+                          <td>{{ relation.pepFactivaId }}</td>
+                          <td>{{ relation.relationship }}</td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td class="is-empty" colspan="2">
+                            Aucun lien enregistré vers une personne exposée.
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </section>
+          }
 
           <section class="card">
             <div class="card__head">

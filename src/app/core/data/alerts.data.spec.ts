@@ -1,7 +1,7 @@
 import { ALERTS, OPEN_ALERT_COUNT, PROCESSED_ALERT_COUNT } from './alerts.data';
 import { PERSONS, findPerson } from './persons.data';
 import { DEFAULT_USER_ID, ENTITIES, USER_IDS } from './reference.data';
-import { ALERT_TYPOLOGIES, isClosedStatus } from '../models';
+import { ALERT_TYPOLOGIES, isClosedStatus, sortableDate } from '../models';
 
 describe('jeu de données des alertes', () => {
   const open = ALERTS.filter((alert) => !isClosedStatus(alert.status));
@@ -150,6 +150,54 @@ describe('jeu de données des alertes', () => {
       for (const row of alert.reconciliation) {
         expect(row.companyName).toBeNull();
         expect(row.incorporationCountry).toBeNull();
+      }
+    }
+  });
+
+  /* L'exposition politique et le lien familial ou d'affaires se rattachent à
+     un individu : une société ne peut porter ni PEP ni RCA. */
+  it('ne déclenche PEP et RCA que sur des personnes physiques', () => {
+    const misplaced = ALERTS.filter(
+      (alert) =>
+        alert.personType === 'LEGAL' && (alert.typology === 'PEP' || alert.typology === 'RCA'),
+    );
+    expect(misplaced).toEqual([]);
+
+    const legalTypologies = new Set(
+      ALERTS.filter((alert) => alert.personType === 'LEGAL').map((alert) => alert.typology),
+    );
+    expect([...legalTypologies].sort()).toEqual(['HRTC', 'SANCTION']);
+  });
+
+  it('renseigne les fonctions publiques sur les seules alertes PEP', () => {
+    for (const alert of ALERTS) {
+      if (alert.typology === 'PEP') {
+        expect(alert.pepFunctions.length).toBeGreaterThan(0);
+        for (const entry of alert.pepFunctions) {
+          expect(entry.category).not.toBe('');
+          expect(entry.label).not.toBe('');
+          /* Une fonction sans date de fin est en cours ; sinon elle se termine
+             après avoir commencé, jamais l'inverse. */
+          if (entry.endDate) {
+            expect(sortableDate(entry.endDate) > sortableDate(entry.startDate)).toBe(true);
+          }
+        }
+      } else {
+        expect(alert.pepFunctions).toEqual([]);
+      }
+    }
+  });
+
+  it('renseigne les liens vers les personnes exposées sur les seules alertes RCA', () => {
+    for (const alert of ALERTS) {
+      if (alert.typology === 'RCA') {
+        expect(alert.pepRelations.length).toBeGreaterThan(0);
+        for (const relation of alert.pepRelations) {
+          expect(relation.pepFactivaId).toMatch(/^\d+$/);
+          expect(relation.relationship).not.toBe('');
+        }
+      } else {
+        expect(alert.pepRelations).toEqual([]);
       }
     }
   });

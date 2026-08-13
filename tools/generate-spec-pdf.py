@@ -48,8 +48,8 @@ INK = colors.HexColor("#17191d")
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "SPECIFICATION-FONCTIONNELLE.pdf"
 
-VERSION = "1.0"
-DATE = "11 août 2026"
+VERSION = "1.1"
+DATE = "13 août 2026"
 
 PAGE_W, PAGE_H = A4
 MARGIN_X = 20 * mm
@@ -796,6 +796,30 @@ def section_reference(story: list) -> None:
         )
     )
 
+    story.append(h3("Typologies applicables selon le type de personne"))
+    story.append(
+        p(
+            "Deux des quatre dispositifs ne concernent que les personnes physiques. "
+            "L'exposition politique tient à une charge publique exercée par un individu, et le "
+            "lien de proximité à une relation familiale ou d'affaires entre personnes : ni l'une "
+            "ni l'autre ne peut se rattacher à une société. Une personne morale ne relève donc "
+            "que du gel des avoirs et du pays tiers à haut risque."
+        )
+    )
+    story.append(
+        table(
+            ["Typologie", "Personne physique", "Personne morale"],
+            [
+                ["SANCTION — Asset Freeze", "Oui", "Oui"],
+                ["PEP — Politically Exposed Person", "Oui", "—"],
+                ["RCA — Relatives and Close Associates", "Oui", "—"],
+                ["HRTC — High Risk Third Country", "Oui", "Oui"],
+            ],
+            [46, 27, 27],
+            strong_columns=(0,),
+        )
+    )
+
     story.append(h2("Statuts et cycle de vie"))
     story.append(
         p(
@@ -1156,6 +1180,37 @@ def section_data_model(story: list) -> None:
             "du lieu de naissance, pays de naissance, code pays de l'adresse et pays de "
             "nationalité. La ligne de source PERSON ne porte pas de taux : elle est la référence "
             "contre laquelle les taux sont calculés."
+        )
+    )
+
+    story.append(h2("Fonction publique et lien d'exposition"))
+    story.append(
+        p(
+            "Deux objets qualifient ce qui a déclenché l'alerte, et ne sont renseignés que sur la "
+            "typologie qui les appelle."
+        )
+    )
+    story.append(
+        table(
+            ["Objet", "Typologie", "Attributs"],
+            [
+                [
+                    "Fonction publique",
+                    "PEP",
+                    "Catégorie de la fonction, libellé de la fonction, date de début, date de "
+                    "fin. Une date de fin absente signale une fonction toujours exercée.",
+                ],
+                [
+                    "Lien d'exposition",
+                    "RCA",
+                    "Identifiant de la fiche de la personne politiquement exposée chez le "
+                    "fournisseur de données, et nature du lien (conjoint, enfant, parent, "
+                    "fratrie, associé proche, bénéficiaire effectif d'une entité commune, "
+                    "représentant légal).",
+                ],
+            ],
+            [18, 12, 70],
+            strong_columns=(0,),
         )
     )
 
@@ -1545,6 +1600,35 @@ def section_screens(story: list) -> None:
     )
     story.append(
         p(
+            "Deux cartes complémentaires s'intercalent entre le rapprochement et la décision, "
+            "selon le dispositif qui a déclenché l'alerte. Elles portent ce qui fonde l'alerte, "
+            "et se placent donc là où l'analyste en a besoin : après ce qui a été rapproché, "
+            "avant ce qu'il en conclut."
+        )
+    )
+    story.append(
+        table(
+            ["Carte", "Affichée pour", "Colonnes"],
+            [
+                [
+                    "Politically exposed functions",
+                    "Alerte PEP",
+                    "Function category, Function label, Start date, End date. Une fonction "
+                    "toujours exercée porte la mention « Ongoing » en lieu et place de la date "
+                    "de fin.",
+                ],
+                [
+                    "Relations with politically exposed persons",
+                    "Alerte RCA",
+                    "PEP Factiva ID, Relationship.",
+                ],
+            ],
+            [26, 16, 58],
+            strong_columns=(0,),
+        )
+    )
+    story.append(
+        p(
             "<b>Decisions</b> présente, sous forme de boutons radio, les seules décisions "
             "ouvertes au niveau d'habilitation du compte connecté, une zone de justification et "
             "la commande de validation."
@@ -1834,6 +1918,23 @@ def section_rules(story: list) -> None:
             "Chaque filiale porte exactement un identifiant système, et c'est la filiale qui le "
             "porte. Une personne, une alerte et un profil héritent de l'identifiant système de "
             "leur filiale et n'en définissent jamais un autre.",
+        ),
+        (
+            "Typologies réservées aux personnes physiques",
+            "Une alerte PEP ou RCA ne peut porter que sur une personne physique. Une personne "
+            "morale ne relève que du gel des avoirs et du pays tiers à haut risque.",
+        ),
+        (
+            "Éléments d'exposition",
+            "Les fonctions publiques ne sont renseignées que sur une alerte PEP, et les liens "
+            "vers les personnes exposées que sur une alerte RCA. La carte correspondante n'est "
+            "présentée que pour cette typologie.",
+        ),
+        (
+            "Colonnes du rapprochement",
+            "Le tableau de rapprochement affiche les colonnes d'état civil pour une personne "
+            "physique, et les colonnes de signalétique société pour une personne morale. Les "
+            "deux jeux ne coexistent jamais.",
         ),
         (
             "Libellés centralisés",
@@ -2190,11 +2291,18 @@ def section_annexes(story: list) -> None:
             ["Version", "Date", "Nature de la modification"],
             [
                 [
-                    VERSION,
-                    DATE,
+                    "1.0",
+                    "11 août 2026",
                     "Version initiale. Décrit l'application telle qu'implémentée : quatre "
                     "typologies, huit statuts, cinq décisions, six écrans, référentiel de cinq "
                     "filiales.",
+                ],
+                [
+                    "1.1",
+                    "13 août 2026",
+                    "Restriction des typologies PEP et RCA aux personnes physiques. Ajout des "
+                    "fonctions publiques et des liens d'exposition au modèle et à l'écran de "
+                    "traitement. Colonnes de rapprochement distinctes selon le type de personne.",
                 ],
             ],
             [14, 18, 68],
