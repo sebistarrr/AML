@@ -24,22 +24,54 @@ import { ModalComponent } from '../../../shared/ui/overlay/modal';
 
 type Tab = 'person' | 'alert' | 'history';
 
-/** Colonnes du tableau de rapprochement, dans leur ordre d'affichage. */
-const RECONCILIATION_COLUMNS = [
-  'Source',
-  'Rate',
-  'Surname',
-  'Alternate name',
-  'Usual given name',
-  'List of given names',
-  'Gender',
-  'Date of birth',
-  'Year of birth',
-  'Place code of birth',
-  'Country of birth',
-  'Country code of the address',
-  'Citizenship country',
-] as const;
+/** Champ de rapprochement affichable — ceux qui portent une chaîne. */
+type ReconciliationField =
+  | 'surname'
+  | 'alternateName'
+  | 'usualGivenName'
+  | 'givenNames'
+  | 'gender'
+  | 'birthDate'
+  | 'birthYear'
+  | 'birthPlaceCode'
+  | 'birthCountry'
+  | 'addressCountryCode'
+  | 'citizenshipCountry'
+  | 'companyName'
+  | 'incorporationCountry';
+
+interface ReconciliationColumn {
+  readonly label: string;
+  readonly field: ReconciliationField;
+  /**
+   * Vrai lorsqu'une valeur portée par une fiche rapprochée est mise en avant :
+   * c'est ce qui a motivé le rapprochement, et l'analyste doit le voir d'un
+   * coup d'œil. La nationalité en est exclue — elle décrit la fiche, elle ne
+   * fonde pas la correspondance.
+   */
+  readonly highlighted: boolean;
+}
+
+/** Colonnes d'un rapprochement de personne physique, dans l'ordre d'affichage. */
+const NATURAL_RECONCILIATION_COLUMNS: readonly ReconciliationColumn[] = [
+  { label: 'Surname', field: 'surname', highlighted: true },
+  { label: 'Alternate name', field: 'alternateName', highlighted: true },
+  { label: 'Usual given name', field: 'usualGivenName', highlighted: true },
+  { label: 'List of given names', field: 'givenNames', highlighted: true },
+  { label: 'Gender', field: 'gender', highlighted: true },
+  { label: 'Date of birth', field: 'birthDate', highlighted: true },
+  { label: 'Year of birth', field: 'birthYear', highlighted: true },
+  { label: 'Place code of birth', field: 'birthPlaceCode', highlighted: true },
+  { label: 'Country of birth', field: 'birthCountry', highlighted: true },
+  { label: 'Country code of the address', field: 'addressCountryCode', highlighted: true },
+  { label: 'Citizenship country', field: 'citizenshipCountry', highlighted: false },
+];
+
+/** Une société n'a ni état civil ni naissance : deux colonnes suffisent. */
+const LEGAL_RECONCILIATION_COLUMNS: readonly ReconciliationColumn[] = [
+  { label: 'Company name', field: 'companyName', highlighted: true },
+  { label: 'Country of incorporation', field: 'incorporationCountry', highlighted: true },
+];
 
 /**
  * Poste de travail d'analyse d'une alerte.
@@ -65,7 +97,6 @@ export class ProcessingComponent {
   /** Identifiant de l'alerte, lié au paramètre de route. */
   readonly alertId = input.required<string>();
 
-  protected readonly reconciliationColumns = RECONCILIATION_COLUMNS;
   protected readonly typologyMeta = ALERT_TYPOLOGY_META;
   protected readonly personTypeMeta = PERSON_TYPE_META;
   protected readonly statusMeta = ALERT_STATUS_META;
@@ -97,6 +128,13 @@ export class ProcessingComponent {
     const alert = this.alert();
     return alert ? this.store.personOf(alert) : undefined;
   });
+
+  /** Colonnes du rapprochement : commandées par le type de la personne. */
+  protected readonly reconciliationColumns = computed<readonly ReconciliationColumn[]>(() =>
+    this.alert()?.personType === 'LEGAL'
+      ? LEGAL_RECONCILIATION_COLUMNS
+      : NATURAL_RECONCILIATION_COLUMNS,
+  );
 
   protected readonly comments = computed(() => this.store.commentsOf(Number(this.alertId())));
   protected readonly history = computed(() => this.store.historyOf(Number(this.alertId())));

@@ -75,6 +75,8 @@ const EMPTY_PERSON_ROW: ReconciliationRow = {
   birthCountry: null,
   addressCountryCode: null,
   citizenshipCountry: null,
+  companyName: null,
+  incorporationCountry: null,
 };
 
 function alertYear(date: string): string {
@@ -119,6 +121,14 @@ function toAlert(seed: AlertSeed): Alert {
    1. Corbeille « Alert Basket » — les dix premières lignes
    -------------------------------------------------------------------------- */
 
+/* La société SP_422421 porte les alertes 1 et 2 : sa ligne de référence est
+   la même pour les deux, comme la produirait le moteur de similarité. */
+const SP_422421_ROW: ReconciliationRow = {
+  ...EMPTY_PERSON_ROW,
+  companyName: 'ENT_9W6O6WKE',
+  incorporationCountry: 'ESP',
+};
+
 const BASKET_SEEDS: readonly AlertSeed[] = [
   {
     id: 1,
@@ -127,9 +137,20 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     personType: 'LEGAL',
     entityId: 'nordia',
     alertDate: '24/12/2025',
+    time: '14:30',
     maxRate: 99.5202,
     user: 'STRAN',
-    factivaId: '2417803',
+    factivaId: '871630866',
+    reconciliation: [
+      SP_422421_ROW,
+      {
+        ...EMPTY_PERSON_ROW,
+        source: 'FACTIVA',
+        rate: 99.5202,
+        companyName: 'ENT_F5RQRSFP',
+        incorporationCountry: 'PRT',
+      },
+    ],
   },
   {
     id: 2,
@@ -138,9 +159,20 @@ const BASKET_SEEDS: readonly AlertSeed[] = [
     personType: 'LEGAL',
     entityId: 'nordia',
     alertDate: '24/12/2025',
+    time: '14:30',
     maxRate: 99.5202,
     user: 'ADUBOIS',
     factivaId: '2417804',
+    reconciliation: [
+      SP_422421_ROW,
+      {
+        ...EMPTY_PERSON_ROW,
+        source: 'FACTIVA',
+        rate: 99.5202,
+        companyName: 'ENT_K72PMQD4',
+        incorporationCountry: 'LUX',
+      },
+    ],
   },
   {
     id: 5,
@@ -299,17 +331,14 @@ const MY_ALERTS_SEEDS: readonly AlertSeed[] = [
    -------------------------------------------------------------------------- */
 
 const FACTIVA_SAFAROV: Omit<ReconciliationRow, 'addressCountryCode'> = {
+  ...EMPTY_PERSON_ROW,
   source: 'FACTIVA',
   rate: 99.0698,
   surname: 'SAFAROV',
-  alternateName: null,
   usualGivenName: 'TALAT',
-  givenNames: null,
   gender: 'MALE',
   birthDate: '22/03/1980',
   birthYear: '1980',
-  birthPlaceCode: null,
-  birthCountry: null,
   citizenshipCountry: 'AZE',
 };
 
@@ -677,6 +706,17 @@ function pick<T>(random: () => number, values: readonly T[]): T {
   return values[Math.floor(random() * values.length)]!;
 }
 
+const COMPANY_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+/** Identifiant de société du fournisseur de données, de la forme ENT_9W6O6WKE. */
+function companyIdentifier(random: () => number): string {
+  let suffix = '';
+  for (let index = 0; index < 8; index += 1) {
+    suffix += COMPANY_ALPHABET.charAt(Math.floor(random() * COMPANY_ALPHABET.length));
+  }
+  return `${pick(random, COMPANY_PREFIXES)}_${suffix}`;
+}
+
 function pad(value: number, length: number): string {
   return String(value).padStart(length, '0');
 }
@@ -700,17 +740,22 @@ function generatedReconciliation(
   personType: PersonType,
   maxRate: number,
 ): readonly ReconciliationRow[] {
+  /* Une société n'a ni état civil ni date de naissance : son rapprochement se
+     joue sur la raison sociale et le pays d'immatriculation, et le tableau de
+     l'écran de traitement se réduit à ces deux colonnes. */
   if (personType === 'LEGAL') {
-    const name = `${pick(random, COMPANY_PREFIXES)}_${pick(random, SURNAMES)}`;
     return [
-      { ...EMPTY_PERSON_ROW, usualGivenName: name },
+      {
+        ...EMPTY_PERSON_ROW,
+        companyName: companyIdentifier(random),
+        incorporationCountry: pick(random, COUNTRIES),
+      },
       {
         ...EMPTY_PERSON_ROW,
         source: 'FACTIVA',
         rate: maxRate,
-        usualGivenName: name,
-        addressCountryCode: pick(random, COUNTRIES),
-        citizenshipCountry: pick(random, COUNTRIES),
+        companyName: companyIdentifier(random),
+        incorporationCountry: pick(random, COUNTRIES),
       },
     ];
   }
@@ -734,17 +779,14 @@ function generatedReconciliation(
   const matches = 1 + Math.floor(random() * 2);
   for (let index = 0; index < matches; index += 1) {
     rows.push({
+      ...EMPTY_PERSON_ROW,
       source: 'FACTIVA',
       rate: maxRate,
       surname,
-      alternateName: null,
       usualGivenName: givenName,
-      givenNames: null,
       gender,
       birthDate,
       birthYear: String(birthYear),
-      birthPlaceCode: null,
-      birthCountry: null,
       addressCountryCode: pick(random, COUNTRIES),
       citizenshipCountry: pick(random, COUNTRIES),
     });

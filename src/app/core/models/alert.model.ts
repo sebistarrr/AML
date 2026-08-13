@@ -21,11 +21,18 @@ import type { UserGroup } from './user.model';
  * Une ligne du tableau de rapprochement par similarité. La première ligne
  * porte la source `PERSON` (les données du référentiel), les suivantes les
  * fiches `FACTIVA` rapprochées, avec leur taux.
+ *
+ * Les champs d'état civil et ceux de signalétique société coexistent dans la
+ * même structure, mais une ligne ne renseigne jamais les deux : le type de la
+ * personne screenée décide desquels sont porteurs de sens, et le tableau de
+ * l'écran de traitement n'affiche que le jeu de colonnes correspondant.
  */
 export interface ReconciliationRow {
   readonly source: ReconciliationSource;
   /** Taux de similarité en %, absent sur la ligne de référence. */
   readonly rate: number | null;
+
+  /* Personne physique */
   readonly surname: string | null;
   readonly alternateName: string | null;
   readonly usualGivenName: string | null;
@@ -37,6 +44,10 @@ export interface ReconciliationRow {
   readonly birthCountry: string | null;
   readonly addressCountryCode: string | null;
   readonly citizenshipCountry: string | null;
+
+  /* Personne morale */
+  readonly companyName: string | null;
+  readonly incorporationCountry: string | null;
 }
 
 /** Action tracée dans l'onglet « Alert history ». */

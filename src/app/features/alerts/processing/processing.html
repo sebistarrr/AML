@@ -10,679 +10,670 @@
 
   <div class="processing">
     <div class="processing__actions">
-      <button type="button" class="btn btn--quiet processing__back" (click)="back()">
-        <span class="material-symbols-outlined">arrow_back</span>
-        Back
-      </button>
-
-      <div class="processing__actions-right">
-        <button type="button" class="btn btn--quiet" (click)="openComment()">
-          <span class="material-symbols-outlined">add_box</span>
-          Add a comment
+      <div class="processing__actions-group">
+        <button type="button" class="processing__action" (click)="back()">
+          <span class="material-symbols-outlined processing__action-icon">arrow_back</span>
+          <span class="processing__action-text">Back</span>
         </button>
-        <button type="button" class="btn btn--quiet" (click)="openAssign()">
-          <span class="material-symbols-outlined">sync_alt</span>
-          Assign an alert
+      </div>
+
+      <div class="processing__actions-group processing__actions-group--spaced">
+        <button type="button" class="processing__action" (click)="openComment()">
+          <span class="material-symbols-outlined processing__action-icon">add_comment</span>
+          <span class="processing__action-text">Add a comment</span>
+        </button>
+        <button type="button" class="processing__action" (click)="openAssign()">
+          <span class="material-symbols-outlined processing__action-icon">cached</span>
+          <span class="processing__action-text">Assign an alert</span>
         </button>
       </div>
     </div>
 
-    <div class="tabs" role="tablist" aria-label="Détail de l'alerte">
-      <button
-        type="button"
-        role="tab"
-        class="tabs__tab"
-        [class.active]="tab() === 'person'"
-        [attr.aria-selected]="tab() === 'person'"
-        (click)="tab.set('person')"
-      >
-        {{ personTabLabel() }}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        class="tabs__tab"
-        [class.active]="tab() === 'alert'"
-        [attr.aria-selected]="tab() === 'alert'"
-        (click)="tab.set('alert')"
-      >
-        {{ alertTabLabel() }}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        class="tabs__tab"
-        [class.active]="tab() === 'history'"
-        [attr.aria-selected]="tab() === 'history'"
-        (click)="tab.set('history')"
-      >
-        Alert history
-      </button>
-    </div>
+    <!-- Onglets et contenu partagent une seule carte : le contenu appartient à
+         l'onglet actif, et une carte par onglet le laisserait croire détaché. -->
+    <div class="processing__panel">
+      <div class="tabs" role="tablist" aria-label="Détail de l'alerte">
+        <button
+          type="button"
+          role="tab"
+          class="tabs__tab"
+          [class.active]="tab() === 'person'"
+          [attr.aria-selected]="tab() === 'person'"
+          (click)="tab.set('person')"
+        >
+          {{ personTabLabel() }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tabs__tab"
+          [class.active]="tab() === 'alert'"
+          [attr.aria-selected]="tab() === 'alert'"
+          (click)="tab.set('alert')"
+        >
+          {{ alertTabLabel() }}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="tabs__tab"
+          [class.active]="tab() === 'history'"
+          [attr.aria-selected]="tab() === 'history'"
+          (click)="tab.set('history')"
+        >
+          Alert history
+        </button>
+      </div>
 
-    <!-- ------------------------------------------------------------------ -->
-    <!-- Onglet 1 — la personne                                              -->
-    <!-- ------------------------------------------------------------------ -->
-    @if (tab() === 'person') {
-      <div class="stack" role="tabpanel">
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">badge</span>
-            Person identification details
-            <button
-              type="button"
-              class="card__toggle"
-              [attr.aria-expanded]="!isCollapsed('identification')"
-              (click)="toggleSection('identification')"
-              aria-label="Replier la section"
-            >
-              <span class="material-symbols-outlined">expand_less</span>
-            </button>
-          </div>
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Onglet 1 — la personne                                              -->
+      <!-- ------------------------------------------------------------------ -->
+      @if (tab() === 'person') {
+        <div class="stack" role="tabpanel">
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">badge</span>
+              Person identification details
+              <button
+                type="button"
+                class="card__toggle"
+                [attr.aria-expanded]="!isCollapsed('identification')"
+                (click)="toggleSection('identification')"
+                aria-label="Replier la section"
+              >
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
+            </div>
 
-          @if (!isCollapsed('identification')) {
-            <div class="card__body">
-              <dl class="kv-grid">
-                <div class="kv">
-                  <dt>Person ID</dt>
-                  <dd>{{ current.personId }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Partner ID</dt>
-                  <dd>{{ subject?.partnerId | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>RIC ID</dt>
-                  <dd>{{ subject?.ricId | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Entity</dt>
-                  <dd>{{ current.entity }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Sub-entity</dt>
-                  <dd>{{ current.subEntity }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>System ID</dt>
-                  <dd>{{ current.systemId }}</dd>
-                </div>
-              </dl>
+            @if (!isCollapsed('identification')) {
+              <div class="card__body">
+                <dl class="kv-grid">
+                  <div class="kv">
+                    <dt>Person ID</dt>
+                    <dd>{{ current.personId }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Partner ID</dt>
+                    <dd>{{ subject?.partnerId | dash }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>RIC ID</dt>
+                    <dd>{{ subject?.ricId | dash }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Entity</dt>
+                    <dd>{{ current.entity }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Sub-entity</dt>
+                    <dd>{{ current.subEntity }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>System ID</dt>
+                    <dd>{{ current.systemId }}</dd>
+                  </div>
+                </dl>
 
-              <div class="card__footer-action">
-                <button type="button" class="btn btn--quiet" (click)="openPersonProfile()">
-                  <span class="material-symbols-outlined">open_in_new</span>
-                  Voir le profil de risque
-                </button>
+                <div class="card__footer-action">
+                  <button type="button" class="btn btn--quiet" (click)="openPersonProfile()">
+                    <span class="material-symbols-outlined">open_in_new</span>
+                    Voir le profil de risque
+                  </button>
+                </div>
               </div>
+            }
+          </section>
+
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">
+                {{ current.personType === 'LEGAL' ? 'apartment' : 'person' }}
+              </span>
+              {{ current.personType === 'LEGAL' ? 'Company details' : 'Person details' }}
+              <button
+                type="button"
+                class="card__toggle"
+                [attr.aria-expanded]="!isCollapsed('details')"
+                (click)="toggleSection('details')"
+                aria-label="Replier la section"
+              >
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
             </div>
-          }
-        </section>
 
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">
-              {{ current.personType === 'LEGAL' ? 'apartment' : 'person' }}
-            </span>
-            {{ current.personType === 'LEGAL' ? 'Company details' : 'Person details' }}
-            <button
-              type="button"
-              class="card__toggle"
-              [attr.aria-expanded]="!isCollapsed('details')"
-              (click)="toggleSection('details')"
-              aria-label="Replier la section"
-            >
-              <span class="material-symbols-outlined">expand_less</span>
-            </button>
-          </div>
+            @if (!isCollapsed('details')) {
+              <div class="card__body">
+                @if (current.personType === 'LEGAL') {
+                  <dl class="kv-grid">
+                    <div class="kv">
+                      <dt>Company name</dt>
+                      <dd>{{ subject?.company?.companyName | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Legal status</dt>
+                      <dd>{{ subject?.company?.legalStatus | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Reference</dt>
+                      <dd>{{ subject?.company?.reference | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Country of incorporation</dt>
+                      <dd>{{ subject?.company?.incorporationCountry | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Activity domain</dt>
+                      <dd>{{ subject?.company?.activityDomain | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Date of creation</dt>
+                      <dd>{{ subject?.company?.creationDate | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Company identifier</dt>
+                      <dd>{{ subject?.company?.companyIdentifier | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Email address</dt>
+                      <dd>{{ subject?.email | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Phone number</dt>
+                      <dd>{{ subject?.phone | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>IBAN</dt>
+                      <dd>{{ subject?.iban | dash }}</dd>
+                    </div>
+                  </dl>
+                } @else {
+                  <dl class="kv-grid">
+                    <div class="kv">
+                      <dt>Surname</dt>
+                      <dd>{{ subject?.identity?.surname | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Gender</dt>
+                      <dd>{{ subject?.identity?.gender | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Email address</dt>
+                      <dd>{{ subject?.email | dash }}</dd>
+                    </div>
 
-          @if (!isCollapsed('details')) {
-            <div class="card__body">
-              @if (current.personType === 'LEGAL') {
+                    <div class="kv">
+                      <dt>Alternate name</dt>
+                      <dd>{{ subject?.identity?.alternateName | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Date of birth</dt>
+                      <dd>{{ subject?.identity?.birthDate | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Phone number</dt>
+                      <dd>{{ subject?.phone | dash }}</dd>
+                    </div>
+
+                    <div class="kv">
+                      <dt>Usual given name</dt>
+                      <dd>{{ subject?.identity?.usualGivenName | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Place code of birth</dt>
+                      <dd>{{ subject?.identity?.birthPlaceCode | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>IBAN</dt>
+                      <dd>{{ subject?.iban | dash }}</dd>
+                    </div>
+
+                    <div class="kv">
+                      <dt>List of given names</dt>
+                      <dd>{{ subject?.identity?.givenNames | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Country of birth</dt>
+                      <dd>{{ subject?.identity?.birthCountry | dash }}</dd>
+                    </div>
+                  </dl>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">home</span>
+              Postal address
+              <button
+                type="button"
+                class="card__toggle"
+                [attr.aria-expanded]="!isCollapsed('address')"
+                (click)="toggleSection('address')"
+                aria-label="Replier la section"
+              >
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
+            </div>
+
+            @if (!isCollapsed('address')) {
+              <div class="card__body">
                 <dl class="kv-grid">
                   <div class="kv">
-                    <dt>Company name</dt>
-                    <dd>{{ subject?.company?.companyName | dash }}</dd>
+                    <dt>Primary address line - recipient name</dt>
+                    <dd>{{ subject?.address?.recipientName | dash }}</dd>
                   </div>
                   <div class="kv">
-                    <dt>Legal status</dt>
-                    <dd>{{ subject?.company?.legalStatus | dash }}</dd>
+                    <dt>Address line 4 - street number, extension and road type</dt>
+                    <dd>{{ subject?.address?.street | dash }}</dd>
                   </div>
                   <div class="kv">
-                    <dt>Reference</dt>
-                    <dd>{{ subject?.company?.reference | dash }}</dd>
+                    <dt>City</dt>
+                    <dd>{{ subject?.address?.city | dash }}</dd>
+                  </div>
+
+                  <div class="kv">
+                    <dt>Second address line - building complement</dt>
+                    <dd>{{ subject?.address?.buildingComplement | dash }}</dd>
                   </div>
                   <div class="kv">
-                    <dt>Country of incorporation</dt>
-                    <dd>{{ subject?.company?.incorporationCountry | dash }}</dd>
+                    <dt>Fifth line of the postal address - additional complement</dt>
+                    <dd>{{ subject?.address?.additionalComplement | dash }}</dd>
                   </div>
                   <div class="kv">
-                    <dt>Activity domain</dt>
-                    <dd>{{ subject?.company?.activityDomain | dash }}</dd>
+                    <dt>Country code of the address</dt>
+                    <dd>{{ subject?.address?.countryCode | dash }}</dd>
+                  </div>
+
+                  <div class="kv">
+                    <dt>Third address line - external location complement</dt>
+                    <dd>{{ subject?.address?.locationComplement | dash }}</dd>
                   </div>
                   <div class="kv">
-                    <dt>Date of creation</dt>
-                    <dd>{{ subject?.company?.creationDate | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Company identifier</dt>
-                    <dd>{{ subject?.company?.companyIdentifier | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Email address</dt>
-                    <dd>{{ subject?.email | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Phone number</dt>
-                    <dd>{{ subject?.phone | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>IBAN</dt>
-                    <dd>{{ subject?.iban | dash }}</dd>
+                    <dt>Postal code</dt>
+                    <dd>{{ subject?.address?.postalCode | dash }}</dd>
                   </div>
                 </dl>
-              } @else {
+              </div>
+            }
+          </section>
+
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">description</span>
+              Contract
+              <button
+                type="button"
+                class="card__toggle"
+                [attr.aria-expanded]="!isCollapsed('contract')"
+                (click)="toggleSection('contract')"
+                aria-label="Replier la section"
+              >
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
+            </div>
+
+            @if (!isCollapsed('contract')) {
+              <div class="card__body">
                 <dl class="kv-grid">
                   <div class="kv">
-                    <dt>Surname</dt>
-                    <dd>{{ subject?.identity?.surname | dash }}</dd>
+                    <dt>Contract number</dt>
+                    <dd>{{ subject?.contract?.number | dash }}</dd>
                   </div>
                   <div class="kv">
-                    <dt>Gender</dt>
-                    <dd>{{ subject?.identity?.gender | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Email address</dt>
-                    <dd>{{ subject?.email | dash }}</dd>
-                  </div>
-
-                  <div class="kv">
-                    <dt>Alternate name</dt>
-                    <dd>{{ subject?.identity?.alternateName | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Date of birth</dt>
-                    <dd>{{ subject?.identity?.birthDate | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Phone number</dt>
-                    <dd>{{ subject?.phone | dash }}</dd>
-                  </div>
-
-                  <div class="kv">
-                    <dt>Usual given name</dt>
-                    <dd>{{ subject?.identity?.usualGivenName | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Place code of birth</dt>
-                    <dd>{{ subject?.identity?.birthPlaceCode | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>IBAN</dt>
-                    <dd>{{ subject?.iban | dash }}</dd>
-                  </div>
-
-                  <div class="kv">
-                    <dt>List of given names</dt>
-                    <dd>{{ subject?.identity?.givenNames | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Country of birth</dt>
-                    <dd>{{ subject?.identity?.birthCountry | dash }}</dd>
+                    <dt>Role</dt>
+                    <dd>{{ subject?.contract?.role | dash }}</dd>
                   </div>
                 </dl>
-              }
+              </div>
+            }
+          </section>
+        </div>
+      }
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Onglet 2 — l'alerte                                                 -->
+      <!-- ------------------------------------------------------------------ -->
+      @if (tab() === 'alert') {
+        <div class="stack" role="tabpanel">
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">frame_inspect</span>
+              Alert identification details
+              <button
+                type="button"
+                class="card__toggle"
+                [attr.aria-expanded]="!isCollapsed('alert-id')"
+                (click)="toggleSection('alert-id')"
+                aria-label="Replier la section"
+              >
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
             </div>
-          }
-        </section>
 
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">home</span>
-            Postal address
-            <button
-              type="button"
-              class="card__toggle"
-              [attr.aria-expanded]="!isCollapsed('address')"
-              (click)="toggleSection('address')"
-              aria-label="Replier la section"
-            >
-              <span class="material-symbols-outlined">expand_less</span>
-            </button>
-          </div>
+            @if (!isCollapsed('alert-id')) {
+              <div class="card__body">
+                <dl class="kv-grid">
+                  <div class="kv kv--highlight">
+                    <dt>Factiva ID</dt>
+                    <dd>
+                      {{ current.factivaId | dash }}
+                      <span
+                        class="material-symbols-outlined kv__hint"
+                        [title]="typologyMeta[current.typology].description"
+                        >info</span
+                      >
+                    </dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Max similarity rate</dt>
+                    <dd>{{ current.maxRate | rate: false }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Status</dt>
+                    <dd>
+                      {{ current.status }}
+                      <span
+                        class="dot"
+                        [class]="'tone-' + statusMeta[current.status].tone"
+                        aria-hidden="true"
+                      ></span>
+                    </dd>
+                  </div>
 
-          @if (!isCollapsed('address')) {
-            <div class="card__body">
-              <dl class="kv-grid">
-                <div class="kv">
-                  <dt>Primary address line - recipient name</dt>
-                  <dd>{{ subject?.address?.recipientName | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Address line 4 - street number, extension and road type</dt>
-                  <dd>{{ subject?.address?.street | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>City</dt>
-                  <dd>{{ subject?.address?.city | dash }}</dd>
-                </div>
+                  <div class="kv">
+                    <dt>Person ID</dt>
+                    <dd>{{ current.personId }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Alert ID</dt>
+                    <dd>{{ current.id }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Assigned user</dt>
+                    <dd>{{ current.user | dash }}</dd>
+                  </div>
 
-                <div class="kv">
-                  <dt>Second address line - building complement</dt>
-                  <dd>{{ subject?.address?.buildingComplement | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Fifth line of the postal address - additional complement</dt>
-                  <dd>{{ subject?.address?.additionalComplement | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Country code of the address</dt>
-                  <dd>{{ subject?.address?.countryCode | dash }}</dd>
-                </div>
+                  <div class="kv">
+                    <dt>Entity</dt>
+                    <dd>{{ current.entity }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Alert date</dt>
+                    <dd>{{ current.alertDateTime }}</dd>
+                  </div>
+                  <div class="kv">
+                    <dt>Assigned user group</dt>
+                    <dd>{{ current.userGroup ? groupMeta[current.userGroup].label : '-' }}</dd>
+                  </div>
+                </dl>
+              </div>
+            }
+          </section>
 
-                <div class="kv">
-                  <dt>Third address line - external location complement</dt>
-                  <dd>{{ subject?.address?.locationComplement | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Postal code</dt>
-                  <dd>{{ subject?.address?.postalCode | dash }}</dd>
-                </div>
-              </dl>
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">plagiarism</span>
+              Similarity-based reconciliation
+              <button
+                type="button"
+                class="card__toggle"
+                [attr.aria-expanded]="!isCollapsed('reconciliation')"
+                (click)="toggleSection('reconciliation')"
+                aria-label="Replier la section"
+              >
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
             </div>
-          }
-        </section>
 
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">description</span>
-            Contract
-            <button
-              type="button"
-              class="card__toggle"
-              [attr.aria-expanded]="!isCollapsed('contract')"
-              (click)="toggleSection('contract')"
-              aria-label="Replier la section"
-            >
-              <span class="material-symbols-outlined">expand_less</span>
-            </button>
-          </div>
+            @if (!isCollapsed('reconciliation')) {
+              <div class="table-scroll">
+                <table
+                  class="data-table reconciliation"
+                  [class.reconciliation--natural]="current.personType !== 'LEGAL'"
+                >
+                  <thead>
+                    <tr>
+                      <th scope="col">Source</th>
+                      <th scope="col">Rate</th>
+                      @for (column of reconciliationColumns(); track column.field) {
+                        <th scope="col">{{ column.label }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of reconciliationRows(); track $index) {
+                      @let matched = row.source !== 'PERSON';
 
-          @if (!isCollapsed('contract')) {
-            <div class="card__body">
-              <dl class="kv-grid">
-                <div class="kv">
-                  <dt>Contract number</dt>
-                  <dd>{{ subject?.contract?.number | dash }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Role</dt>
-                  <dd>{{ subject?.contract?.role | dash }}</dd>
-                </div>
-              </dl>
+                      <tr [class.is-source]="!matched">
+                        <td class="reconciliation__source">{{ row.source }}</td>
+                        <td>{{ row.rate | rate: false }}</td>
+                        @for (column of reconciliationColumns(); track column.field) {
+                          <td
+                            [class.is-matched]="matched && column.highlighted && row[column.field]"
+                          >
+                            {{ row[column.field] | dash }}
+                          </td>
+                        }
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td class="is-empty" [attr.colspan]="reconciliationColumns().length + 2">
+                          Aucun rapprochement enregistré pour cette alerte.
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="paginator">
+                <label>
+                  Items per page
+                  <select
+                    [value]="reconciliationPageSize()"
+                    (change)="
+                      reconciliationPageSize.set(+$any($event.target).value);
+                      reconciliationPage.set(0)
+                    "
+                  >
+                    <option [value]="10">10</option>
+                    <option [value]="25">25</option>
+                  </select>
+                </label>
+
+                <span>{{ reconciliationRange() }}</span>
+
+                <span class="paginator__pages">
+                  <button
+                    type="button"
+                    aria-label="Première page"
+                    [disabled]="reconciliationPage() === 0"
+                    (click)="reconciliationPage.set(0)"
+                  >
+                    <span class="material-symbols-outlined">first_page</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Page précédente"
+                    [disabled]="reconciliationPage() === 0"
+                    (click)="reconciliationPage.set(reconciliationPage() - 1)"
+                  >
+                    <span class="material-symbols-outlined">chevron_left</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Page suivante"
+                    [disabled]="reconciliationPage() >= reconciliationPageCount() - 1"
+                    (click)="reconciliationPage.set(reconciliationPage() + 1)"
+                  >
+                    <span class="material-symbols-outlined">chevron_right</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Dernière page"
+                    [disabled]="reconciliationPage() >= reconciliationPageCount() - 1"
+                    (click)="reconciliationPage.set(reconciliationPageCount() - 1)"
+                  >
+                    <span class="material-symbols-outlined">last_page</span>
+                  </button>
+                </span>
+              </div>
+            }
+          </section>
+
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">gavel</span>
+              Decisions
+              <button
+                type="button"
+                class="card__toggle"
+                [attr.aria-expanded]="!isCollapsed('decisions')"
+                (click)="toggleSection('decisions')"
+                aria-label="Replier la section"
+              >
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
             </div>
-          }
-        </section>
-      </div>
-    }
 
-    <!-- ------------------------------------------------------------------ -->
-    <!-- Onglet 2 — l'alerte                                                 -->
-    <!-- ------------------------------------------------------------------ -->
-    @if (tab() === 'alert') {
-      <div class="stack" role="tabpanel">
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">frame_inspect</span>
-            Alert identification details
-            <button
-              type="button"
-              class="card__toggle"
-              [attr.aria-expanded]="!isCollapsed('alert-id')"
-              (click)="toggleSection('alert-id')"
-              aria-label="Replier la section"
-            >
-              <span class="material-symbols-outlined">expand_less</span>
-            </button>
-          </div>
+            @if (!isCollapsed('decisions')) {
+              <div class="card__body">
+                @if (isClosed()) {
+                  <dl class="kv-grid">
+                    <div class="kv">
+                      <dt>Decision</dt>
+                      <dd>{{ current.decision ? decisionMeta[current.decision].label : '-' }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Processing date</dt>
+                      <dd>{{ current.processedAt | dash }}</dd>
+                    </div>
+                    <div class="kv">
+                      <dt>Decided by</dt>
+                      <dd>{{ current.user | dash }}</dd>
+                    </div>
+                  </dl>
+                  <p class="decisions__recorded">{{ current.justification | dash }}</p>
+                } @else if (!canDecide()) {
+                  <p class="decisions__locked">
+                    Votre niveau d'habilitation ne permet pas de prononcer une décision sur cette
+                    alerte.
+                  </p>
+                } @else {
+                  <p class="decisions__label">Decisions</p>
 
-          @if (!isCollapsed('alert-id')) {
-            <div class="card__body">
-              <dl class="kv-grid">
-                <div class="kv kv--highlight">
-                  <dt>Factiva ID</dt>
-                  <dd>
-                    {{ current.factivaId | dash }}
-                    <span
-                      class="material-symbols-outlined kv__hint"
-                      [title]="typologyMeta[current.typology].description"
-                      >info</span
+                  <div class="decisions__options" role="radiogroup" aria-label="Decisions">
+                    @for (option of availableDecisions(); track option) {
+                      <label class="decisions__option">
+                        <input
+                          type="radio"
+                          name="decision"
+                          [value]="option"
+                          [checked]="decision() === option"
+                          (change)="decision.set(option)"
+                        />
+                        <span>{{ decisionMeta[option].label }}</span>
+                        <span
+                          class="dot"
+                          [class]="'tone-' + decisionMeta[option].tone"
+                          aria-hidden="true"
+                        ></span>
+                      </label>
+                    }
+                  </div>
+
+                  <label class="decisions__justification">
+                    <span>Justification ({{ maxJustification }} characters maximum) *</span>
+                    <textarea
+                      [attr.maxlength]="maxJustification"
+                      placeholder="Enter the decision justification"
+                      [value]="justification()"
+                      (input)="justification.set($any($event.target).value)"
+                    ></textarea>
+                  </label>
+
+                  <div class="decisions__actions">
+                    <button
+                      type="button"
+                      class="btn btn--primary"
+                      [disabled]="!canValidate()"
+                      (click)="submitDecision()"
                     >
-                  </dd>
-                </div>
-                <div class="kv">
-                  <dt>Max similarity rate</dt>
-                  <dd>{{ current.maxRate | rate: false }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Status</dt>
-                  <dd>
-                    {{ current.status }}
-                    <span
-                      class="dot"
-                      [class]="'tone-' + statusMeta[current.status].tone"
-                      aria-hidden="true"
-                    ></span>
-                  </dd>
-                </div>
+                      Validate
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        </div>
+      }
 
-                <div class="kv">
-                  <dt>Person ID</dt>
-                  <dd>{{ current.personId }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Alert ID</dt>
-                  <dd>{{ current.id }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Assigned user</dt>
-                  <dd>{{ current.user | dash }}</dd>
-                </div>
-
-                <div class="kv">
-                  <dt>Entity</dt>
-                  <dd>{{ current.entity }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Alert date</dt>
-                  <dd>{{ current.alertDateTime }}</dd>
-                </div>
-                <div class="kv">
-                  <dt>Assigned user group</dt>
-                  <dd>{{ current.userGroup ? groupMeta[current.userGroup].label : '-' }}</dd>
-                </div>
-              </dl>
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Onglet 3 — l'historique                                             -->
+      <!-- ------------------------------------------------------------------ -->
+      @if (tab() === 'history') {
+        <div class="stack" role="tabpanel">
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">history</span>
+              Alert history
             </div>
-          }
-        </section>
 
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">plagiarism</span>
-            Similarity-based reconciliation
-            <button
-              type="button"
-              class="card__toggle"
-              [attr.aria-expanded]="!isCollapsed('reconciliation')"
-              (click)="toggleSection('reconciliation')"
-              aria-label="Replier la section"
-            >
-              <span class="material-symbols-outlined">expand_less</span>
-            </button>
-          </div>
-
-          @if (!isCollapsed('reconciliation')) {
             <div class="table-scroll">
-              <table class="data-table reconciliation">
+              <table class="data-table">
                 <thead>
                   <tr>
-                    @for (column of reconciliationColumns; track column) {
-                      <th scope="col">{{ column }}</th>
-                    }
+                    <th scope="col">Date</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">User</th>
+                    <th scope="col">User group</th>
+                    <th scope="col">Previous value</th>
+                    <th scope="col">New value</th>
+                    <th scope="col">Comment</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (row of reconciliationRows(); track $index) {
-                    @let matched = row.source !== 'PERSON';
-
-                    <tr [class.is-source]="!matched">
-                      <td class="reconciliation__source">{{ row.source }}</td>
-                      <td>{{ row.rate | rate: false }}</td>
-                      <td [class.is-matched]="matched && row.surname">{{ row.surname | dash }}</td>
-                      <td [class.is-matched]="matched && row.alternateName">
-                        {{ row.alternateName | dash }}
-                      </td>
-                      <td [class.is-matched]="matched && row.usualGivenName">
-                        {{ row.usualGivenName | dash }}
-                      </td>
-                      <td [class.is-matched]="matched && row.givenNames">
-                        {{ row.givenNames | dash }}
-                      </td>
-                      <td [class.is-matched]="matched && row.gender">{{ row.gender | dash }}</td>
-                      <td [class.is-matched]="matched && row.birthDate">
-                        {{ row.birthDate | dash }}
-                      </td>
-                      <td [class.is-matched]="matched && row.birthYear">
-                        {{ row.birthYear | dash }}
-                      </td>
-                      <td [class.is-matched]="matched && row.birthPlaceCode">
-                        {{ row.birthPlaceCode | dash }}
-                      </td>
-                      <td [class.is-matched]="matched && row.birthCountry">
-                        {{ row.birthCountry | dash }}
-                      </td>
-                      <td [class.is-matched]="matched && row.addressCountryCode">
-                        {{ row.addressCountryCode | dash }}
-                      </td>
-                      <td>{{ row.citizenshipCountry | dash }}</td>
-                    </tr>
-                  } @empty {
+                  @for (event of history(); track event.id) {
                     <tr>
-                      <td class="is-empty" [attr.colspan]="reconciliationColumns.length">
-                        Aucun rapprochement enregistré pour cette alerte.
-                      </td>
+                      <td class="is-date">{{ event.date }}</td>
+                      <td>{{ historyLabels[event.action] }}</td>
+                      <td>{{ event.user | dash }}</td>
+                      <td>{{ event.userGroup ? groupMeta[event.userGroup].label : '-' }}</td>
+                      <td>{{ event.previousValue | dash }}</td>
+                      <td>{{ event.newValue | dash }}</td>
+                      <td class="history__comment">{{ event.comment | dash }}</td>
                     </tr>
                   }
                 </tbody>
               </table>
             </div>
+          </section>
 
-            <div class="paginator">
-              <label>
-                Items per page
-                <select
-                  [value]="reconciliationPageSize()"
-                  (change)="
-                    reconciliationPageSize.set(+$any($event.target).value);
-                    reconciliationPage.set(0)
-                  "
-                >
-                  <option [value]="10">10</option>
-                  <option [value]="25">25</option>
-                </select>
-              </label>
-
-              <span>{{ reconciliationRange() }}</span>
-
-              <span class="paginator__pages">
-                <button
-                  type="button"
-                  aria-label="Première page"
-                  [disabled]="reconciliationPage() === 0"
-                  (click)="reconciliationPage.set(0)"
-                >
-                  <span class="material-symbols-outlined">first_page</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Page précédente"
-                  [disabled]="reconciliationPage() === 0"
-                  (click)="reconciliationPage.set(reconciliationPage() - 1)"
-                >
-                  <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Page suivante"
-                  [disabled]="reconciliationPage() >= reconciliationPageCount() - 1"
-                  (click)="reconciliationPage.set(reconciliationPage() + 1)"
-                >
-                  <span class="material-symbols-outlined">chevron_right</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Dernière page"
-                  [disabled]="reconciliationPage() >= reconciliationPageCount() - 1"
-                  (click)="reconciliationPage.set(reconciliationPageCount() - 1)"
-                >
-                  <span class="material-symbols-outlined">last_page</span>
-                </button>
-              </span>
+          <section class="card">
+            <div class="card__head">
+              <span class="material-symbols-outlined">forum</span>
+              Comments
             </div>
-          }
-        </section>
 
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">gavel</span>
-            Decisions
-            <button
-              type="button"
-              class="card__toggle"
-              [attr.aria-expanded]="!isCollapsed('decisions')"
-              (click)="toggleSection('decisions')"
-              aria-label="Replier la section"
-            >
-              <span class="material-symbols-outlined">expand_less</span>
-            </button>
-          </div>
-
-          @if (!isCollapsed('decisions')) {
             <div class="card__body">
-              @if (isClosed()) {
-                <dl class="kv-grid">
-                  <div class="kv">
-                    <dt>Decision</dt>
-                    <dd>{{ current.decision ? decisionMeta[current.decision].label : '-' }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Processing date</dt>
-                    <dd>{{ current.processedAt | dash }}</dd>
-                  </div>
-                  <div class="kv">
-                    <dt>Decided by</dt>
-                    <dd>{{ current.user | dash }}</dd>
-                  </div>
-                </dl>
-                <p class="decisions__recorded">{{ current.justification | dash }}</p>
-              } @else if (!canDecide()) {
-                <p class="decisions__locked">
-                  Votre niveau d'habilitation ne permet pas de prononcer une décision sur cette
-                  alerte.
-                </p>
-              } @else {
-                <p class="decisions__label">Decisions</p>
-
-                <div class="decisions__options" role="radiogroup" aria-label="Decisions">
-                  @for (option of availableDecisions(); track option) {
-                    <label class="decisions__option">
-                      <input
-                        type="radio"
-                        name="decision"
-                        [value]="option"
-                        [checked]="decision() === option"
-                        (change)="decision.set(option)"
-                      />
-                      <span>{{ decisionMeta[option].label }}</span>
-                      <span
-                        class="dot"
-                        [class]="'tone-' + decisionMeta[option].tone"
-                        aria-hidden="true"
-                      ></span>
-                    </label>
-                  }
-                </div>
-
-                <label class="decisions__justification">
-                  <span>Justification ({{ maxJustification }} characters maximum) *</span>
-                  <textarea
-                    [attr.maxlength]="maxJustification"
-                    placeholder="Enter the decision justification"
-                    [value]="justification()"
-                    (input)="justification.set($any($event.target).value)"
-                  ></textarea>
-                </label>
-
-                <div class="decisions__actions">
-                  <button
-                    type="button"
-                    class="btn btn--primary"
-                    [disabled]="!canValidate()"
-                    (click)="submitDecision()"
-                  >
-                    Validate
-                  </button>
-                </div>
+              @for (comment of comments(); track comment.id) {
+                <article class="comment">
+                  <p class="comment__meta">
+                    {{ comment.user }} · {{ groupMeta[comment.userGroup].label }} ·
+                    {{ comment.createdAt }}
+                  </p>
+                  <p class="comment__body">{{ comment.body }}</p>
+                </article>
+              } @empty {
+                <p class="comment__empty">Aucun commentaire sur cette alerte.</p>
               }
             </div>
-          }
-        </section>
-      </div>
-    }
-
-    <!-- ------------------------------------------------------------------ -->
-    <!-- Onglet 3 — l'historique                                             -->
-    <!-- ------------------------------------------------------------------ -->
-    @if (tab() === 'history') {
-      <div class="stack" role="tabpanel">
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">history</span>
-            Alert history
-          </div>
-
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Action</th>
-                  <th scope="col">User</th>
-                  <th scope="col">User group</th>
-                  <th scope="col">Previous value</th>
-                  <th scope="col">New value</th>
-                  <th scope="col">Comment</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (event of history(); track event.id) {
-                  <tr>
-                    <td class="is-date">{{ event.date }}</td>
-                    <td>{{ historyLabels[event.action] }}</td>
-                    <td>{{ event.user | dash }}</td>
-                    <td>{{ event.userGroup ? groupMeta[event.userGroup].label : '-' }}</td>
-                    <td>{{ event.previousValue | dash }}</td>
-                    <td>{{ event.newValue | dash }}</td>
-                    <td class="history__comment">{{ event.comment | dash }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card__head">
-            <span class="material-symbols-outlined">forum</span>
-            Comments
-          </div>
-
-          <div class="card__body">
-            @for (comment of comments(); track comment.id) {
-              <article class="comment">
-                <p class="comment__meta">
-                  {{ comment.user }} · {{ groupMeta[comment.userGroup].label }} ·
-                  {{ comment.createdAt }}
-                </p>
-                <p class="comment__body">{{ comment.body }}</p>
-              </article>
-            } @empty {
-              <p class="comment__empty">Aucun commentaire sur cette alerte.</p>
-            }
-          </div>
-        </section>
-      </div>
-    }
+          </section>
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Modale « Add a comment » -->

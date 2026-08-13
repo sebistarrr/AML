@@ -124,4 +124,45 @@ describe('jeu de données des alertes', () => {
     const profile = findPerson('PM123456789');
     expect(profile?.risks.map((risk) => risk.level)).toContain('Blacklisté');
   });
+
+  /* L'écran de traitement choisit ses colonnes sur le type de la personne :
+     un rapprochement qui porterait les mauvais champs afficherait un tableau
+     entièrement vide sans qu'aucune erreur ne soit levée. */
+  it('rapproche les sociétés sur la raison sociale, jamais sur un état civil', () => {
+    const legal = ALERTS.filter((alert) => alert.personType === 'LEGAL');
+    expect(legal.length).toBeGreaterThan(0);
+
+    for (const alert of legal) {
+      for (const row of alert.reconciliation) {
+        expect(row.companyName).not.toBeNull();
+        expect(row.incorporationCountry).not.toBeNull();
+        expect(row.surname).toBeNull();
+        expect(row.birthDate).toBeNull();
+      }
+    }
+  });
+
+  it('rapproche les personnes physiques sur leur état civil', () => {
+    const natural = ALERTS.filter((alert) => alert.personType === 'NATURAL');
+    expect(natural.length).toBeGreaterThan(0);
+
+    for (const alert of natural) {
+      for (const row of alert.reconciliation) {
+        expect(row.companyName).toBeNull();
+        expect(row.incorporationCountry).toBeNull();
+      }
+    }
+  });
+
+  /* L'alerte 1 est celle sur laquelle le rendu de l'écran est comparé au
+     design de référence : ses valeurs sont figées, pas générées. */
+  it("fige le rapprochement de l'alerte 1 sur le design de référence", () => {
+    const alert = ALERTS.find((candidate) => candidate.id === 1);
+    expect(alert?.reconciliation.map((row) => [row.companyName, row.incorporationCountry])).toEqual(
+      [
+        ['ENT_9W6O6WKE', 'ESP'],
+        ['ENT_F5RQRSFP', 'PRT'],
+      ],
+    );
+  });
 });

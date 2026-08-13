@@ -22,22 +22,58 @@
   color: var(--muted);
 }
 
+/* --- Barre d'actions --------------------------------------------------------
+   Les trois commandes sont du texte accompagné d'une icône, sans habillage de
+   bouton : elles surplombent la fiche sans entrer en concurrence visuelle avec
+   « Validate », seule action engageante de l'écran. */
+
 .processing__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 56px;
+  justify-content: space-between;
+  padding: 12px 16px;
 }
 
-.processing__actions-right {
-  margin-left: auto;
+.processing__actions-group {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.processing__back {
-  font-weight: 600;
+.processing__actions-group--spaced {
+  gap: 16px;
+}
+
+.processing__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.processing__action:hover,
+.processing__action:focus,
+.processing__action:active {
+  background: transparent;
+}
+
+.processing__action:hover .processing__action-text {
+  text-decoration: underline;
+}
+
+.processing__action-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
 }
 
 /* --- Onglets ---------------------------------------------------------------- */
@@ -46,33 +82,43 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  border: 1px solid var(--line);
-  border-radius: 8px 8px 0 0;
   background: var(--surface);
+  border-radius: 8px 8px 0 0;
   overflow: hidden;
 }
 
 .tabs__tab {
+  min-width: 220px;
   min-height: 52px;
   padding: 0 16px;
   border: 0;
-  border-bottom: 2px solid transparent;
-  border-right: 1px solid var(--line);
+  /* L'onglet inactif est souligné par la bordure de la carte ; l'onglet actif
+     l'interrompt et porte l'indicateur rose à la place. */
+  border-bottom: 1px solid var(--line);
   background: var(--surface);
   color: var(--navy);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   cursor: pointer;
 }
 
-.tabs__tab:last-child {
-  border-right: 0;
+.tabs__tab + .tabs__tab {
+  border-left: 1px solid var(--line);
 }
 
 .tabs__tab.active {
-  background: var(--surface-2);
-  border-bottom-color: var(--pink);
+  background: rgb(0 0 0 / 4%);
+  border-bottom: 3px solid var(--pink);
   color: var(--pink);
+}
+
+/* --- Carte englobante -------------------------------------------------------- */
+
+.processing__panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
 }
 
 /* --- Empilement des cartes --------------------------------------------------- */
@@ -80,7 +126,7 @@
 .stack {
   display: grid;
   gap: 12px;
-  padding-top: 12px;
+  padding: 16px;
 }
 
 .card__footer-action {
@@ -107,12 +153,52 @@
 
 /* --- Rapprochement ----------------------------------------------------------- */
 
-.reconciliation {
+/* Les treize colonnes d'un rapprochement de personne physique ne tiennent pas
+   dans une fenêtre : le tableau impose sa largeur et défile dans son cadre. Le
+   rapprochement d'une société n'a que quatre colonnes et n'en a pas besoin. */
+.reconciliation--natural {
   min-width: 1500px;
 }
 
-.reconciliation td {
+/* Les lignes forment un bloc encadré, détaché de l'en-tête : l'en-tête nomme
+   les colonnes, le cadre délimite ce qui est comparé. */
+.reconciliation th {
   height: 56px;
+  border: 0;
+}
+
+.reconciliation td {
+  height: 52px;
+  border-bottom: 1px solid var(--line);
+  background-clip: padding-box;
+}
+
+.reconciliation td:first-child {
+  border-left: 1px solid var(--line);
+}
+
+.reconciliation td:last-child {
+  border-right: 1px solid var(--line);
+}
+
+.reconciliation tbody tr:first-of-type td {
+  border-top: 1px solid var(--line);
+}
+
+.reconciliation tbody tr:first-of-type td:first-child {
+  border-top-left-radius: 8px;
+}
+
+.reconciliation tbody tr:first-of-type td:last-child {
+  border-top-right-radius: 8px;
+}
+
+.reconciliation tbody tr:last-of-type td:first-child {
+  border-bottom-left-radius: 8px;
+}
+
+.reconciliation tbody tr:last-of-type td:last-child {
+  border-bottom-right-radius: 8px;
 }
 
 /* La ligne du référentiel sert de repère : elle reste en encre normale, les
@@ -132,6 +218,7 @@
 /* Les attributs qui ont porté le rapprochement sont soulignés : c'est sur eux
    que l'analyste fonde sa décision, pas sur les colonnes vides. */
 .reconciliation .is-matched {
+  font-weight: 700;
   text-decoration: underline;
 }
 
